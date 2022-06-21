@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <!-- Load joint controller configurations from YAML file to parameter server -->
+    <rosparam file="$(find millihex_robot)/config/millihex_control.yaml" command="load" />
+
+    <!-- load the controllers -->
+
+    <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
+        output="screen" ns="/millihex"
+        args="joint_state_controller
+            leg1_joint1_position_controller leg1_joint2_position_controller leg1_joint3_position_controller
+            leg2_joint1_position_controller leg2_joint2_position_controller leg2_joint3_position_controller
+            leg3_joint1_position_controller leg3_joint2_position_controller leg3_joint3_position_controller
+            leg4_joint1_position_controller leg4_joint2_position_controller leg4_joint3_position_controller
+            leg5_joint1_position_controller leg5_joint2_position_controller leg5_joint3_position_controller
+            leg6_joint1_position_controller leg6_joint2_position_controller leg6_joint3_position_controller
+            " />
+
+    <!-- convert joint states to TF transforms for rviz, etc -->
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"
+        respawn="false" output="screen">
+        <remap from="/joint_states" to="/millihex/joint_states" />
+    </node>
+    
+</launch>
