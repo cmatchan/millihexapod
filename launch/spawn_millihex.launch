@@ -9,7 +9,7 @@
     <arg name="z" default="0.2" />
 
     <arg name="robot_name" default="millihex" />
-    <arg name="xacro_file_path" default="$(find millihex_robot)/robot/millihex.xacro" />
+    <arg name="xacro_file_path" default="$(find millihexapod)/robot/millihex_description.xacro" />
 
     <!-- Load the URDF into the ROS Parameter Server -->
     <param name="robot_description" command="$(find xacro)/xacro $(arg xacro_file_path)" />
@@ -19,6 +19,6 @@
         args="-urdf -x $(arg x) -y $(arg y) -z $(arg z)  -model $(arg robot_name) -param robot_description" />
 
     <!-- Launch robot joint controllers -->
-    <include file="$(find millihex_robot)/launch/start_controllers.launch" />
+    <include file="$(find millihexapod)/launch/start_controllers.launch" />
 
 </launch>
