@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import sys
 import rospy
-from millihex import Robot
+from millihex_robot import Robot
 
 def main():
     """Initializes ROS node for robot"""
