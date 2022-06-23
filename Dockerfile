@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # Build Docker Image from scratch:
-#   DOCKER_BUILDKIT=1 docker build -t cmatchan/millihexapod:<tag> .
+#   DOCKER_BUILDKIT=1 docker build --no-cache -t cmatchan/millihexapod:<tag> .
 #
 # Pull Docker Image from Dockerhub:
 #   docker pull cmatchan/millihexapod:<tag>
