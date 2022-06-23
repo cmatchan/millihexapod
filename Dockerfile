@@ -1,35 +1,39 @@
 # syntax=docker/dockerfile:1
 
-# USAGE: DOCKER_BUILDKIT=1 docker build -t cmatchan/ros-noetic-millihex .
-#        docker run --name container_name -it cmatchan/ros-noetic-millihex bash
+# Build Docker Image from scratch:
+#   DOCKER_BUILDKIT=1 docker build -t cmatchan/millihexapod .
 
+# Pull Docker Image from Dockerhub:
+#   docker pull cmatchan/millihexapod
+
+# Run Docker Image in a new Container:
+#   docker run --name millihex -it cmatchan/millihexapod bash
+
+
+# Install ROS Noetic and package dependenceis
 FROM osrf/ros:noetic-desktop-full
 SHELL ["/bin/bash", "-c"]
 RUN apt-get -y update \
     && apt-get -y upgrade \
     && apt-get -y install \
     ros-noetic-ros-controllers
+    git
 
+# Set DISPLAY and OpenGL environment variables in .bashrc
 RUN echo "export DISPLAY=host.docker.internal:0.0" >> ~/.bashrc \
     && echo "export LIBGL_ALWAYS_INDIRECT=0" >> ~/.bashrc \
     && echo "source /opt/ros/noetic/setup.bash" >> ~/.bashrc \
     && source ~/.bashrc
 
+# Build catkin_ws and source workspace
 RUN mkdir -p ~/catkin_ws/src
 WORKDIR /root/catkin_ws/
 RUN source /opt/ros/noetic/setup.bash \
-    && catkin_make
-
-RUN echo "source /root/catkin_ws/devel/setup.bash" >> ~/.bashrc \
+    && catkin_make \
+    && echo "source /root/catkin_ws/devel/setup.bash" >> ~/.bashrc \
     && source ~/.bashrc
 
-# Commands for adding package dependencies
+# Create working directory for robot development
 WORKDIR /root/catkin_ws/src/
-RUN catkin_create_pkg millihex_robot std_msgs rospy
-ADD . /root/catkin_ws/src/millihex_robot/
-
-# # Commands for adding folders
-# WORKDIR /root/catkin_ws/src/millihex_robot
-# RUN mkdir config \
-#     && mkdir launch \
-#     && mkdir robot
+RUN catkin_create_pkg millihexapod std_msgs rospy \
+    && git clone https://github.com/cmatchan/millihexapod.git
