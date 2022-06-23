@@ -2,13 +2,12 @@
 
 # Build Docker Image from scratch:
 #   DOCKER_BUILDKIT=1 docker build -t cmatchan/millihexapod .
-
+#
 # Pull Docker Image from Dockerhub:
 #   docker pull cmatchan/millihexapod
-
+#
 # Run Docker Image in a new Container:
 #   docker run --name millihex -it cmatchan/millihexapod bash
-
 
 # Install ROS Noetic and package dependenceis
 FROM osrf/ros:noetic-desktop-full
