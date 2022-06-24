@@ -1,5 +1,21 @@
+<!-- Check URDF: -->
+<!-- rosrun xacro xacro millihex_description.xacro > millihex_description.urdf -->
+
 <?xml version="1.0"?>
 <robot name="millihex" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+    <!-- Equations -->
+    <!-- Calculate Mass of a Box -->
+    <xacro:macro name="box_mass" params="density x y z">
+        <mass value="${density*x*y*z}" />
+    </xacro:macro>
+
+    <!-- Calculate Moment of Inertia of a Box -->
+    <xacro:macro name="box_inertia" params="mass x y z">
+        <inertia ixx="${mass*(y*y+z*z)/12}" ixy = "0" ixz = "0"
+            iyy="${mass*(x*x+z*z)/12}" iyz = "0" izz="${mass*(x*x+y*y)/12}" />
+    </xacro:macro>
+
 
     <!-- Physical Properties -->
     <!-- PCB density ~ FR4 density (kg/m^3) -->
@@ -44,17 +60,9 @@
     <material name="Black">
         <color rgba="0 0 0 1" />
     </material>
-
     <material name="Orange">
         <color rgba="0.98 0.41 0.055 1" />
     </material>
-
-
-    <!-- Calculate Moment of Inertia of a Box -->
-    <xacro:macro name="box_inertia" params="mass x y z">
-        <inertia ixx="${mass*(y*y+z*z)/12}" ixy = "0" ixz = "0"
-            iyy="${mass*(x*x+z*z)/12}" iyz = "0" izz="${mass*(x*x+y*y)/12}" />
-    </xacro:macro>
 
 
     <!-- Base and Torso Definition -->
@@ -295,9 +303,8 @@
     </xacro:macro>
   
 
-    <!-- Build Robot by Filling in Macro Parameters -->
+    <!-- Build Robot and Gazebo Control Library -->
     <xacro:millihex_body />
-
     <xacro:millihex_control namespace="millihex" />
 
 </robot>
