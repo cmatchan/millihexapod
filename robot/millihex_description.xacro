@@ -21,9 +21,9 @@
     <xacro:property name="leg_link_mass"
         value="${pcb_density * leg_link_x * leg_link_y * pcb_thickness_z}" />
 
-    <!-- Massless Joint Link x,y dimensions (m) -->
-    <xacro:property name="joint_link_r" value="${pcb_thickness_z / 2}" />
-    <xacro:property name="joint_link_l" value="${leg_link_x}"
+    <!-- Fake Joint Link r,l dimensions (m) -->
+    <xacro:property name="fake_joint_link_r" value="${pcb_thickness_z / 2}" />
+    <xacro:property name="fake_joint_link_l" value="${leg_link_x}" />
 
     <!-- Joint limits (rad) -->
     <xacro:property name="joint_upper_limit" value="1.5708" />
@@ -64,12 +64,12 @@
     </xacro:macro>
 
 
-    <!-- Base and Torso Definition -->
+    <!-- Torso Definition -->
     <xacro:macro name="millihex_torso" params="color">
-        <!-- Dummy link to support KDL -->
+        <!-- Dummy Base Link to support KDL -->
         <link name="base_link" />
 
-        <!-- Torso geometry without legs -->
+        <!-- Torso Geometry -->
         <link name="torso">
             <inertial>
                 <origin xyz="0 0 ${pcb_thickness_z / 2}" rpy="0 0 0" />
@@ -109,10 +109,43 @@
     </xacro:macro>
 
 
+    <!-- Fake Joint Link Definition -->
+    <xacro:macro name="millihex_fake_joint_link"
+        params="leg_number link_number x_length y_length color">
+
+        <!-- Fake Joint Link Geometry -->
+        <link name="leg${leg_number}_link${link_number}">
+            <collision>
+                <origin xyz="-${x_length / 2} -${y_length / 2} 0" rpy="0 0 0" />
+                <geometry>
+                    <cylinder radius="${fake_joint_link_r}"
+                        length="${fake_joint_link_l}" />
+                </geometry>
+            </collision>
+            <visual>
+                <origin xyz="-${x_length / 2} -${y_length / 2} 0" rpy="0 0 0" />
+                <geometry>
+                    <box size="${x_length} ${y_length} ${pcb_thickness_z}" />
+                </geometry>
+                <material name="${color}"/>
+            </visual>
+        </link>
+
+        <!-- Gazebo properties -->
+        <gazebo reference="leg${leg_number}_link${link_number}">
+            <kp>${link_kp}</kp>
+            <kd>${link_kd}</kd>
+            <mu1>${link_mu1}</mu1>
+            <mu2>${link_mu2}</mu2>
+            <material>Gazebo/${color}</material>
+        </gazebo>
+    </xacro:macro>
+
+
     <!-- Leg Link Definition -->
     <xacro:macro name="millihex_leg_link"
         params="leg_number link_number x_length y_length color">
-        <!-- Leg geometry -->
+        <!-- Leg Link Geometry -->
         <link name="leg${leg_number}_link${link_number}">
             <inertial>
                 <origin xyz="0 0 ${pcb_thickness_z / 2}" rpy="0 0 0" />
