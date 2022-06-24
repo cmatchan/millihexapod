@@ -7,19 +7,23 @@
     <!-- PCB density ~= FR4 density (kg/m^3) -->
     <!-- PCB thickness (m) -->
     <xacro:property name="pcb_density" value="1850" />
-    <xacro:property name="pcb_thickness_z" value="0.0015" />
+    <xacro:property name="pcb_thickness_z" value="0.003" />
 
-    <!-- Torso x,y dimensions (m) and mass (kg) -->
+    <!-- Torso Link x,y dimensions (m) and mass (kg) -->
     <xacro:property name="torso_x" value="0.14" />
     <xacro:property name="torso_y" value="0.04" />
     <xacro:property name="torso_mass"
         value="${pcb_density * torso_x * torso_y * pcb_thickness_z}" />
 
-    <!-- Leg x,y dimensions (m) -->
+    <!-- Leg Link x,y dimensions (m) and mass (kg) -->
     <xacro:property name="leg_link_x" value="0.02" />
     <xacro:property name="leg_link_y" value="0.03" />
     <xacro:property name="leg_link_mass"
         value="${pcb_density * leg_link_x * leg_link_y * pcb_thickness_z}" />
+
+    <!-- Massless Joint Link x,y dimensions (m) -->
+    <xacro:property name="joint_link_r" value="${pcb_thickness_z / 2}" />
+    <xacro:property name="joint_link_l" value="${leg_link_x}"
 
     <!-- Joint limits (rad) -->
     <xacro:property name="joint_upper_limit" value="1.5708" />
