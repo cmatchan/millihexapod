@@ -1,60 +1,86 @@
 <?xml version="1.0"?>
-<!-- Check URDF: -->
+
+<!-- Generate URDF: -->
 <!-- rosrun xacro xacro millihex_description.xacro > millihex_description.urdf -->
 
 <robot name="millihex" xmlns:xacro="http://www.ros.org/wiki/xacro">
-    <!-- Physical Properties -->
-    <!-- PCB density ~= FR4 density (kg/m^3) -->
-    <!-- PCB thickness (m) -->
-    <xacro:property name="pcb_density" value="1850" />
-    <xacro:property name="pcb_thickness_z" value="0.003" />
 
-    <!-- Torso Link x,y dimensions (m) and mass (kg) -->
-    <xacro:property name="torso_x" value="0.14" />
-    <xacro:property name="torso_y" value="0.04" />
-    <xacro:property name="torso_mass"
-        value="${pcb_density * torso_x * torso_y * pcb_thickness_z}" />
+    <!-- PCB Properties -->
+    <xacro:property name="pcb_density" value="1850" />       <!-- FR4 density (kg/m^3) -->
+    <xacro:property name="pcb_thickness_z" value="0.003" />  <!-- PCB thickness (m) -->
 
-    <!-- Leg Link x,y dimensions (m) and mass (kg) -->
-    <xacro:property name="leg_link_x" value="0.02" />
-    <xacro:property name="leg_link_y" value="0.03" />
-    <xacro:property name="leg_link_mass"
-        value="${pcb_density * leg_link_x * leg_link_y * pcb_thickness_z}" />
+    <!-- Thorax Properties -->
+    <xacro:property name="thorax_x" value="0.20" />     <!-- x length (m) -->
+    <xacro:property name="thorax_y" value="0.03" />     <!-- y length (m) -->
+    <xacro:property name="thorax_kp" value="1000.0" />  <!-- contact stiffness -->
+    <xacro:property name="thorax_kd" value="1000.0" />  <!-- contact damping -->
+    <xacro:property name="thorax_mu1" value="10.0" />   <!-- friction coef 1 -->
+    <xacro:property name="thorax_mu2" value="10.0" />   <!-- friction coef 2 -->
+    <xacro:property name="thorax_mass"
+        value="${pcb_density * (thorax_x * thorax_y * pcb_thickness_z)}" />  <!-- (kg) -->
+    
+    <!-- Coxa Properties -->
+    <xacro:property name="coxa_x" value="0.14" />     <!-- x length (m) -->
+    <xacro:property name="coxa_y" value="0.04" />     <!-- y length (m) -->
+    <xacro:property name="coxa_kp" value="1000.0" />  <!-- contact stiffness -->
+    <xacro:property name="coxa_kd" value="1000.0" />  <!-- contact damping -->
+    <xacro:property name="coxa_mu1" value="10.0" />   <!-- friction coef 1 -->
+    <xacro:property name="coxa_mu2" value="10.0" />   <!-- friction coef 2 -->
+    <xacro:property name="coxa_mass"
+        value="${pcb_density * (coxa_x * coxa_y * pcb_thickness_z)}" />  <!-- (kg) -->
 
-    <!-- Fake Joint Link r,l dimensions (m) -->
-    <xacro:property name="fake_joint_link_r" value="${pcb_thickness_z / 2}" />
-    <xacro:property name="fake_joint_link_l" value="${leg_link_x}" />
+    <!-- Femur (Leg Link 1) Properties -->
+    <xacro:property name="leg_link_1_x" value="0.02" />     <!-- x length (m) -->
+    <xacro:property name="leg_link_1_y" value="0.03" />     <!-- y length (m) -->
+    <xacro:property name="leg_link_1_kp" value="1000.0" />  <!-- contact stiffness -->
+    <xacro:property name="leg_link_1_kd" value="1000.0" />  <!-- contact damping -->
+    <xacro:property name="leg_link_1_mu1" value="10.0" />   <!-- friction coef 1 -->
+    <xacro:property name="leg_link_1_mu2" value="10.0" />   <!-- friction coef 2 -->
+    <xacro:property name="leg_link_1_mass"
+        value="${pcb_density * (leg_link_1_x * leg_link_2_y * pcb_thickness_z)}" />  <!-- (kg) -->
 
-    <!-- Joint limits (rad) -->
-    <xacro:property name="joint_upper_limit" value="1.5708" />
-    <xacro:property name="joint_lower_limit" value="-1.5708" />
-    <xacro:property name="joint_effort_limit" value="0.01" />
-    <xacro:property name="joint_velocity_limit" value="0.01" />
+    <!-- Tibia (Leg Link 2) Properties -->
+    <xacro:property name="leg_link_2_x" value="0.02" />     <!-- x length (m) -->
+    <xacro:property name="leg_link_2_y" value="0.03" />     <!-- y length (m) -->
+    <xacro:property name="leg_link_2_kp" value="1000.0" />  <!-- contact stiffness -->
+    <xacro:property name="leg_link_2_kd" value="1000.0" />  <!-- contact damping -->
+    <xacro:property name="leg_link_2_mu1" value="10.0" />   <!-- friction coef 1 -->
+    <xacro:property name="leg_link_2_mu2" value="10.0" />   <!-- friction coef 2 -->
+    <xacro:property name="leg_link_2_mass"
+        value="${pcb_density * (leg_link_2_x * leg_link_2_y * pcb_thickness_z)}" />  <!-- (kg) -->
 
-    <!-- Joint damping (N*m*s/rad) and friction (N*m) -->
-    <xacro:property name="joint_damping" value="0.00003" />
-    <xacro:property name="joint_friction" value="0.001" />
+    <!-- Tarsus (Leg Link 3) Properties -->
+    <xacro:property name="leg_link_3_x" value="0.02" />     <!-- x length (m) -->
+    <xacro:property name="leg_link_3_y" value="0.03" />     <!-- y length (m) -->
+    <xacro:property name="leg_link_3_kp" value="1000.0" />  <!-- contact stiffness -->
+    <xacro:property name="leg_link_3_kd" value="1000.0" />  <!-- contact damping -->
+    <xacro:property name="leg_link_3_mu1" value="10.0" />   <!-- friction coef 1 -->
+    <xacro:property name="leg_link_3_mu2" value="10.0" />   <!-- friction coef 2 -->
+    <xacro:property name="leg_link_3_mass"
+        value="${pcb_density * (leg_link_3_x * leg_link_3_y * pcb_thickness_z)}" />  <!-- (kg) -->
+        
+    <!-- Joint Link Properties -->
+    <xacro:property name="joint_link_r" value="${pcb_thickness_z / 2}" />  <!-- radius (m) -->
+    <xacro:property name="joint_link_l" value="${leg_link_x}" />           <!-- length (m) -->
 
-    <!-- Gazebo Properties -->
-    <!-- Link contact stiffness (kp) -->
-    <!-- Link contact damping (kp) -->
-    <xacro:property name="link_kp" value="1000.0" />
-    <xacro:property name="link_kd" value="1000.0" />
-
-    <!-- Link coulomb friction coefficients in direction 1,2 -->
-    <!-- mu = [0, inf] where higher mu means less slip -->
-    <xacro:property name="link_mu1" value="10.0" />
-    <xacro:property name="link_mu2" value="10.0" />
-
+    <!-- Revolute Joint Properties -->
+    <xacro:property name="joint_upper_limit" value="1.5708" />   <!-- (rad) -->
+    <xacro:property name="joint_lower_limit" value="-1.5708" />  <!-- (rad) -->
+    <xacro:property name="joint_effort_limit" value="0.1" />     <!-- (rad/s) -->
+    <xacro:property name="joint_velocity_limit" value="0.1" />   <!-- (rad/s) -->
+    <xacro:property name="joint_damping" value="0.0" />          <!-- damping (N*m*s/rad)-->
+    <xacro:property name="joint_friction" value="0.0" />         <!-- friction (N*m) -->
 
     <!-- Color Definitions -->
+    <material name="Cyan">
+        <color rgba="0.0 1.0 1.0 1.0" />
+    </material>
     <material name="Black">
-        <color rgba="0 0 0 1" />
+        <color rgba="0.0 0.0 0.0 1.0" />
     </material>
     <material name="Orange">
-        <color rgba="0.98 0.41 0.055 1" />
+        <color rgba="0.98 0.41 0.055 1.0" />
     </material>
-
 
     <!-- Equation Macros -->
     <!-- Calculate Moment of Inertia of a Box -->
@@ -63,58 +89,56 @@
             iyy="${mass*(x*x+z*z)/12}" iyz = "0" izz="${mass*(x*x+y*y)/12}" />
     </xacro:macro>
 
-
-    <!-- Torso Definition -->
-    <xacro:macro name="millihex_torso" params="color">
+    <!-- Thorax Definition -->
+    <xacro:macro name="millihex_thorax" params="color">
+    
         <!-- Dummy Base Link to support KDL -->
         <link name="base_link" />
-
-        <!-- Torso Geometry -->
-        <link name="torso">
+        
+        <!-- Thorax Geometry -->
+        <link name="thorax">
             <inertial>
                 <origin xyz="0 0 ${pcb_thickness_z / 2}" rpy="0 0 0" />
-                <mass value="${torso_mass}" />
-                <xacro:box_inertia mass="${torso_mass}" x="${torso_x}"
-                    y="${torso_y}" z="${pcb_thickness_z}" />
+                <mass value="${thorax_mass}" />
+                <xacro:box_inertia mass="${thorax_mass}" x="${thorax_x}"
+                    y="${thorax_y}" z="${pcb_thickness_z}" />
             </inertial>
             <collision>
                 <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
-                    <box size="${torso_x} ${torso_y} ${pcb_thickness_z}" />
+                    <box size="${thorax_x} ${thorax_y} ${pcb_thickness_z}" />
                 </geometry>
             </collision>
             <visual>
                 <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
-                    <box size="${torso_x} ${torso_y} ${pcb_thickness_z}" />
+                    <box size="${thorax_x} ${thorax_y} ${pcb_thickness_z}" />
                 </geometry>
                 <material name="${color}" />
             </visual>
         </link>
 
         <!-- Gazebo properties -->
-        <gazebo reference="torso">
-            <kp>${link_kp}</kp>
-            <kd>${link_kd}</kd>
-            <mu1>${link_mu1}</mu1>
-            <mu2>${link_mu2}</mu2>
+        <gazebo reference="thorax">
+            <kp>${thorax_kp}</kp>
+            <kd>${thorax_kd}</kd>
+            <mu1>${thorax_mu1}</mu1>
+            <mu2>${thorax_mu2}</mu2>
             <material>Gazebo/${color}</material>
         </gazebo>
 
-        <!-- Join Base Link and Torso -->
+        <!-- Join Base Link and Thorax -->
         <joint name="base_joint" type="fixed">
             <parent link="base_link" />
-            <child link="torso" />
+            <child link="thorax" />
         </joint>
     </xacro:macro>
 
 
-    <!-- Fake Joint Link Definition -->
-    <xacro:macro name="millihex_fake_joint_link"
-        params="leg_number link_number x_length y_length color">
-
-        <!-- Fake Joint Link Geometry -->
-        <link name="leg${leg_number}_link${link_number}">
+    <!-- Joint Link Definition -->
+    <xacro:macro name="millihex_joint_link" params="leg_number link_number color">
+        <!-- Joint Link Geometry -->
+        <link name="leg${leg_number}_joint_link${link_number}">
             <collision>
                 <origin xyz="-${x_length / 2} -${y_length / 2} 0" rpy="0 0 0" />
                 <geometry>
@@ -222,42 +246,6 @@
 
         <xacro:leg_transmission leg_number="${leg_number}" joint_number="1" />
 
-        <!-- Link 2, horizontally oriented -->
-        <xacro:millihex_leg_link leg_number="${leg_number}" link_number="2"
-            x_length="${leg_link_x}" y_length="${leg_link_y}" color="Black" />
-
-        <joint name="leg${leg_number}_joint2" type="revolute">
-            <parent link="leg${leg_number}_link1" />
-            <child link="leg${leg_number}_link2" />
-            <origin xyz="-${leg_link_y} 0 0" rpy="0 0 0" />
-            <dynamics damping="${joint_damping}" friction="${joint_friction}" />
-            <limit lower="${joint_lower_limit}"
-                   upper="${joint_upper_limit}"
-                   effort="${joint_effort_limit}"
-                   velocity="${joint_velocity_limit}" />
-            <axis xyz="0 -1 0" />
-        </joint>
-
-        <xacro:leg_transmission leg_number="${leg_number}" joint_number="2" />
-
-        <!-- Link 3, horizontally oriented -->
-        <xacro:millihex_leg_link leg_number="${leg_number}" link_number="3"
-            x_length="${leg_link_x}" y_length="${leg_link_y}" color="Orange" />
-
-        <joint name="leg${leg_number}_joint3" type="revolute">
-            <parent link="leg${leg_number}_link2" />
-            <child link="leg${leg_number}_link3" />
-            <origin xyz="0 -${leg_link_y} 0" rpy="0 0 0" />
-            <dynamics damping="${joint_damping}" friction="${joint_friction}" />
-            <limit lower="${joint_lower_limit}"
-                   upper="${joint_upper_limit}"
-                   effort="${joint_effort_limit}"
-                   velocity="${joint_velocity_limit}" />
-            <axis xyz="1 0 0" />
-        </joint>
-
-        <xacro:leg_transmission leg_number="${leg_number}" joint_number="3" />
-
     </xacro:macro>
 
 
@@ -273,53 +261,6 @@
             <parent link="torso" />
             <child link="leg1_link0" />
             <origin xyz="${torso_x / 2} -${torso_y / 2} 0" rpy="0 0 0" />
-        </joint>
-
-        <!-- Leg 2 -->
-        <xacro:millihex_leg leg_number="2" />
-        <!-- Leg 2, Joint 0 (fixed, shoulder joint) -->
-        <joint name="leg2_joint0" type="fixed">
-            <parent link="torso" />
-            <child link="leg2_link0" />
-            <origin xyz="${leg_link_x / 2} -${torso_y / 2} 0" rpy="0 0 0" />
-        </joint>
-
-        <!-- Leg 3 -->
-        <xacro:millihex_leg leg_number="3" />
-        <!-- Leg 3, Joint 0 (fixed, shoulder joint) -->
-        <joint name="leg3_joint0" type="fixed">
-            <parent link="torso" />
-            <child link="leg3_link0" />
-            <origin xyz="-${torso_x / 2 - leg_link_x} -${torso_y / 2} 0"
-                rpy="0 0 0" />
-        </joint>
-
-        <!-- Leg 4 -->
-        <xacro:millihex_leg leg_number="4" />
-        <!-- Leg 4, Joint 0 (fixed, shoulder joint) -->
-        <joint name="leg4_joint0" type="fixed">
-            <parent link="torso" />
-            <child link="leg4_link0" />
-            <origin xyz="${torso_x / 2} ${torso_y / 2} 0" rpy="3.1416 0 0" />
-        </joint>
-
-        <!-- Leg 5 -->
-        <xacro:millihex_leg leg_number="5" />
-        <!-- Leg 5, Joint 0 (fixed, shoulder joint) -->
-        <joint name="leg5_joint0" type="fixed">
-            <parent link="torso" />
-            <child link="leg5_link0" />
-            <origin xyz="${leg_link_x / 2} ${torso_y / 2} 0" rpy="3.1416 0 0" />
-        </joint>
-
-        <!-- Leg 6 -->
-        <xacro:millihex_leg leg_number="6" />
-        <!-- Leg 6, Joint 0 (fixed, shoulder joint) -->
-        <joint name="leg6_joint0" type="fixed">
-            <parent link="torso" />
-            <child link="leg6_link0" />
-            <origin xyz="-${torso_x / 2 - leg_link_x} ${torso_y / 2} 0"
-                rpy="3.1416 0 0" />
         </joint>
     
     </xacro:macro>
