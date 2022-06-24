@@ -4,6 +4,14 @@
 <!-- rosrun xacro xacro millihex_description.xacro > millihex_description.urdf -->
 
 <robot name="millihex" xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <!-- Gazebo Control Library -->
+    <xacro:macro name="millihex_control" params="namespace">
+        <gazebo>
+            <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+                <robotNamespace>/${namespace}</robotNamespace>
+            </plugin>
+        </gazebo>
+    </xacro:macro>
 
     <!-- PCB Properties -->
     <xacro:property name="pcb_density" value="1850" />       <!-- FR4 density (kg/m^3) -->
@@ -58,6 +66,14 @@
     <xacro:property name="leg_link_3_mu2" value="10.0" />   <!-- friction coef 2 -->
     <xacro:property name="leg_link_3_mass"
         value="${pcb_density * (leg_link_3_x * leg_link_3_y * pcb_thickness_z)}" />  <!-- (kg) -->
+
+    <!-- Thorax Leg Joint Attachment Positions -->
+    <xacro:property name="leg_spacing" value="${(2 * coxa_x) + leg_link_2_x}" />
+    <xacro:property name="frontal_leg_x" value="${(thorax_x / 2) - (coxa_x / 2)}" />
+    <xacro:property name="medial_leg_x" value="${frontal_leg_x - leg_spacing}" />
+    <xacro:property name="hind_leg_x" value="${medial_leg_x - leg_spacing}" />
+    <xacro:property name="right_side_y" value="${thorax_y / 2}" />
+    <xacro:property name="left_side_y" value="${-(thorax_y / 2)}" />
         
     <!-- Joint Link Properties -->
     <xacro:property name="joint_link_r" value="0.0015" />  <!-- radius (m) -->
@@ -82,7 +98,6 @@
         <color rgba="0.98 0.41 0.055 1.0" />
     </material>
 
-    <!-- Equation Macros -->
     <!-- Calculate Moment of Inertia of a Box -->
     <xacro:macro name="box_inertia" params="mass x y z">
         <inertia ixx="${mass*(y*y+z*z)/12}" ixy = "0" ixz = "0"
@@ -91,7 +106,6 @@
 
     <!-- Thorax Definition -->
     <xacro:macro name="millihex_thorax" params="color">
-    
         <!-- Dummy Base Link to support KDL -->
         <link name="base_link" />
         
@@ -136,7 +150,6 @@
 
     <!-- Coxa Definition -->
     <xacro:macro name="millihex_coxa" params="leg_number color">
-
         <!-- Coxa Geometry -->
         <link name="leg${leg_number}_coxa">
             <inertial>
@@ -172,7 +185,6 @@
 
     <!-- Femur (Leg Link 1) Definition -->
     <xacro:macro name="millihex_leg_link_1" params="leg_number color">
-
         <!-- Femur (Leg Link 1) Geometry -->
         <link name="leg${leg_number}_link1">
             <inertial>
@@ -231,7 +243,7 @@
         </gazebo>
     </xacro:macro>
 
-    <!-- Leg Joint Transmission -->
+    <!-- Joint Transmission -->
     <xacro:macro name="leg_transmission" params="leg_number joint_number">
         <transmission name="leg${leg_number}_joint${joint_number}_tran">
             <type>transmission_interface/SimpleTransmission</type>
@@ -251,18 +263,15 @@
   
     <!-- Assemble Leg -->
     <xacro:macro name="millihex_leg" params="leg_number">
-        <!-- Link 0 (shoulder link), horizontally oriented -->
-        <xacro:millihex_leg_link leg_number="${leg_number}" link_number="0"
-            x_length="${leg_link_x}" y_length="${leg_link_y}" color="Black" />
+        <!-- Coxa -->
+        <xacro:millihex_coxa leg_number="${leg_number}" color="Black" />
 
-        <!-- Link 1, vertically oriented -->
-        <xacro:millihex_leg_link leg_number="${leg_number}" link_number="1"
-            x_length="${leg_link_y}" y_length="${leg_link_x}" color="Orange" />
-
+        <!-- Coxa to Femur Joint Link (Joint Link 1) -->
+        <xacro:millihex_joint_link leg_number="${leg_number}" link_number="1" color="Cyan" />
+        <!-- leg#_joint1 -->
         <joint name="leg${leg_number}_joint1" type="revolute">
-            <parent link="leg${leg_number}_link0" />
-            <child link="leg${leg_number}_link1" />
-            <origin xyz="0 -${leg_link_y} 0" rpy="0 0 0" />
+            <parent link="leg${leg_number}_coxa" />
+            <child link="leg${leg_number}_joint_link1" />
             <dynamics damping="${joint_damping}" friction="${joint_friction}" />
             <limit lower="${joint_lower_limit}"
                    upper="${joint_upper_limit}"
@@ -271,33 +280,32 @@
             <axis xyz="1 0 0" />
         </joint>
         <xacro:leg_transmission leg_number="${leg_number}" joint_number="1" />
+
+        <!-- Femur (Leg Link 1) -->
+        <xacro:millihex_leg_link_1 leg_number="${leg_number}" color="Orange" />
+        <!-- leg#_fixed_joint1 -->
+        <joint name="leg${leg_number}_fixed_joint1" type="fixed">
+            <parent link="leg${leg_number}_joint_link1" />
+            <child link="leg${leg_number}_link1" />
+            <origin xyz="0 0 0" rpy="0 0 0" />
+        </joint>
     </xacro:macro>
 
     <!-- Assemble Body -->
     <xacro:macro name="millihex_body" params="">
-        <!-- Call Thorax xacro -->
+        <!-- Thorax -->
         <xacro:millihex_thorax color="Orange" />
 
-        <!-- Leg 1-->
+        <!-- Leg 1 -->
         <xacro:millihex_leg leg_number="1" />
-        <!-- Leg 1, Joint 0 (fixed, shoulder joint)-->
-        <joint name="leg1_joint0" type="fixed">
-            <parent link="torso" />
-            <child link="leg1_link0" />
-            <origin xyz="${torso_x / 2} -${torso_y / 2} 0" rpy="0 0 0" />
+        <joint name="leg1_coxa_joint" type="fixed">
+            <parent link="thorax" />
+            <child link="leg1_coxa" />
+            <origin xyz="${frontal_leg_x} ${right_side_y} 0" rpy="0 0 0" />
         </joint>
     </xacro:macro>
 
-    <!-- Add Gazebo Control Library -->
-    <xacro:macro name="millihex_control" params="namespace">
-        <gazebo>
-            <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
-                <robotNamespace>/${namespace}</robotNamespace>
-            </plugin>
-        </gazebo>
-    </xacro:macro>
-
-    <!-- Build Robot and Gazebo Control Library -->
+    <!-- Assemble Robot -->
     <xacro:millihex_body />
     <xacro:millihex_control namespace="millihex" />
 
