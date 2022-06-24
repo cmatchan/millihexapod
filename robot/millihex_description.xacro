@@ -23,7 +23,7 @@
 
     <!-- Massless Joint Link x,y dimensions (m) -->
     <xacro:property name="joint_link_r" value="${pcb_thickness_z / 2}" />
-    <xacro:property name="joint_link_l" value="${leg_link_x}"
+    <xacro:property name="joint_link_l" value="${leg_link_x}" />
 
     <!-- Joint limits (rad) -->
     <xacro:property name="joint_upper_limit" value="1.5708" />
