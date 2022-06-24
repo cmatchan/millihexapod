@@ -2,27 +2,30 @@
 <robot name="millihex" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
     <!-- Physical Properties -->
-    <!-- Torso mass and x,y dimensions -->
+    <!-- PCB density ~ FR4 density (kg/m^3) -->
+    <xacro:property name="pcb_density" value="1850" />
+
+    <!-- Torso mass (kg) and x,y dimensions (m) -->
     <xacro:property name="torso_mass" value="0.01" />
     <xacro:property name="torso_x" value="0.14" />
     <xacro:property name="torso_y" value="0.04" />
 
-    <!-- Leg mass and x,y dimensions -->
+    <!-- Leg mass (kg) and x,y dimensions (m) -->
     <xacro:property name="leg_link_mass" value="0.0008" />
     <xacro:property name="leg_link_x" value="0.02" />
     <xacro:property name="leg_link_y" value="0.03" />
 
-    <!-- Joint limits -->
+    <!-- Joint limits (rad) -->
     <xacro:property name="joint_upper_limit" value="1.5708" />
     <xacro:property name="joint_lower_limit" value="-1.5708" />
     <xacro:property name="joint_effort_limit" value="0.01" />
     <xacro:property name="joint_velocity_limit" value="0.01" />
 
-    <!-- Joint damping (b) and friction (k) -->
+    <!-- Joint damping (b = N*s/m) and spring constant (k = N/m) -->
     <xacro:property name="joint_damping" value="0.00003" />
     <xacro:property name="joint_friction" value="0.001" />
 
-    <!-- PCB thickness -->
+    <!-- PCB thickness (m) -->
     <xacro:property name="pcb_thickness_z" value="0.0005" />
 
     <!-- Link Gazebo properties -->
