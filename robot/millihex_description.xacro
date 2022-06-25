@@ -72,8 +72,8 @@
     <xacro:property name="frontal_leg_x" value="${(thorax_x / 2) - (coxa_x / 2)}" />
     <xacro:property name="medial_leg_x" value="${frontal_leg_x - leg_spacing}" />
     <xacro:property name="hind_leg_x" value="${medial_leg_x - leg_spacing}" />
-    <xacro:property name="right_side_y" value="${thorax_y / 2}" />
-    <xacro:property name="left_side_y" value="${-(thorax_y / 2)}" />
+    <xacro:property name="right_side_y" value="${(thorax_y / 2) + (coxa_y / 2)}" />
+    <xacro:property name="left_side_y" value="${-((thorax_y / 2) + (coxa_y / 2))}" />
         
     <!-- Joint Link Properties -->
     <xacro:property name="joint_link_r" value="0.0015" />  <!-- radius (m) -->
@@ -88,14 +88,14 @@
     <xacro:property name="joint_friction" value="0.0" />         <!-- friction (N*m) -->
 
     <!-- Color Definitions -->
-    <material name="Cyan">
-        <color rgba="0.0 1.0 1.0 1.0" />
-    </material>
     <material name="Black">
         <color rgba="0.0 0.0 0.0 1.0" />
     </material>
     <material name="Orange">
         <color rgba="0.98 0.41 0.055 1.0" />
+    </material>
+    <material name="White">
+        <color rgba="0.0 0.0 0.0 0.0" />
     </material>
 
     <!-- Calculate Moment of Inertia of a Box -->
@@ -219,7 +219,8 @@
     </xacro:macro>
 
     <!-- Joint Link Definition -->
-    <xacro:macro name="millihex_joint_link" params="leg_number link_number color">
+    <xacro:macro name="millihex_joint_link"
+        params="leg_number link_number yaw color">
         <!-- Joint Link Geometry -->
         <link name="leg${leg_number}_joint_link${link_number}">
             <collision>
@@ -229,7 +230,7 @@
                 </geometry>
             </collision>
             <visual>
-                <origin xyz="0 0 0" rpy="0 0 0" />
+                <origin xyz="0 0 0" rpy="0 ${pi / 2} ${yaw}" />
                 <geometry>
                     <cylinder radius="${joint_link_r}" length="${joint_link_l}" />
                 </geometry>
@@ -267,11 +268,13 @@
         <xacro:millihex_coxa leg_number="${leg_number}" color="Black" />
 
         <!-- Coxa to Femur Joint Link (Joint Link 1) -->
-        <xacro:millihex_joint_link leg_number="${leg_number}" link_number="1" color="Cyan" />
+        <xacro:millihex_joint_link leg_number="${leg_number}" link_number="1"
+            yaw="0.0" color="White" />
         <!-- leg#_joint1 -->
         <joint name="leg${leg_number}_joint1" type="revolute">
             <parent link="leg${leg_number}_coxa" />
             <child link="leg${leg_number}_joint_link1" />
+            <origin xyz="0 ${(coxa_y / 2) + (joint_link_r)} 0" rpy="0 0 0" />
             <dynamics damping="${joint_damping}" friction="${joint_friction}" />
             <limit lower="${joint_lower_limit}"
                    upper="${joint_upper_limit}"
@@ -287,7 +290,7 @@
         <joint name="leg${leg_number}_fixed_joint1" type="fixed">
             <parent link="leg${leg_number}_joint_link1" />
             <child link="leg${leg_number}_link1" />
-            <origin xyz="0 0 0" rpy="0 0 0" />
+            <origin xyz="0 ${(leg_link_1_y / 2) + (joint_link_r)} 0" rpy="0 0 0" />
         </joint>
     </xacro:macro>
 
