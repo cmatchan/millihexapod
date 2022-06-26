@@ -4,7 +4,7 @@ millihex:
         type: joint_state_controller/JointStateController
         publish_rate: 50
 
-    # Position Controllers ---------------------------------------
+    # Joint position controllers ---------------------------------------
     # Leg 1
     leg1_joint1_position_controller:
         type: effort_controllers/JointPositionController

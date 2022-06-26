@@ -22,7 +22,7 @@ def main():
                 "    joint_state_controller:\n"\
                 "        type: joint_state_controller/JointStateController\n"\
                 "        publish_rate: 50\n\n"\
-                "    # Position Controllers ---------------------------------------\n")
+                "    # Joint position controllers ---------------------------------------\n")
 
         # Write joint_position_controller publishers
         for k in range(num_legs):
