@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import sys
 import rospy
+import numpy as np
 from millihex_robot import Robot
 
 def main():
@@ -28,17 +29,19 @@ def main():
         print(f"swing_state: {millihex.get_swing_state()}\n")
         rate.sleep()
 
+        # millihex.set_joint_position(1, 1, -np.pi / 4)
+
         millihex.stand_up()
         print(f"stance_state: {millihex.get_stance_state()}")
         print(f"swing_state: {millihex.get_swing_state()}\n")
         rate.sleep()
 
-        # Test millihex tripod gait
-        while not rospy.is_shutdown():
-            millihex.tripod_gait()
-            print(f"stance_state: {millihex.get_stance_state()}")
-            print(f"swing_state: {millihex.get_swing_state()}\n")
-            rate.sleep()
+        # # Test millihex tripod gait
+        # while not rospy.is_shutdown():
+        #     millihex.tripod_gait()
+        #     print(f"stance_state: {millihex.get_stance_state()}")
+        #     print(f"swing_state: {millihex.get_swing_state()}\n")
+        #     rate.sleep()
 
     except rospy.ROSInterruptException:
         pass
