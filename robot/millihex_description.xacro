@@ -15,7 +15,7 @@
 
     <!-- PCB Properties -->
     <xacro:property name="pcb_density" value="1850" />       <!-- FR4 density (kg/m^3) -->
-    <xacro:property name="pcb_thickness_z" value="0.003" />  <!-- PCB thickness (m) -->
+    <xacro:property name="pcb_thickness_z" value="0.002" />  <!-- PCB thickness (m) -->
 
     <!-- Thorax Properties -->
     <xacro:property name="thorax_x" value="0.25" />     <!-- x length (m) -->
@@ -48,8 +48,8 @@
         value="${pcb_density * (leg_link_3_x * leg_link_3_y * pcb_thickness_z)}" />  <!-- (kg) -->
         
     <!-- Joint Link Properties -->
-    <xacro:property name="joint_link_r" value="0.0015" />  <!-- radius (m) -->
-    <xacro:property name="joint_link_l" value="0.01" />    <!-- length (m) -->
+    <xacro:property name="joint_link_r" value="${pcb_thickness_z / 2}" />  <!-- radius (m) -->
+    <xacro:property name="joint_link_l" value="${coxa_x}" />               <!-- length (m) -->
     <xacro:property name="joint_link_mass"
         value="${pcb_density * (pi * (joint_link_r * joint_link_r) * joint_link_l)}" />  <!-- (kg) -->
 

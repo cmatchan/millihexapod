@@ -6,9 +6,9 @@ def main():
     Enables easy changes to be made to PID values."""
     
     # Change PID values for joint controller here
-    p = 0.1
+    p = 0.06
     i = 0.0
-    d = 0.0
+    d = 0.00015
 
     # Millihex leg and joint count
     num_legs = 6
