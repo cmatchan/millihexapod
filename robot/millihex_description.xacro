@@ -44,8 +44,6 @@
     <!-- Tarsus (Leg Link 3) Properties -->
     <xacro:property name="leg_link_3_x" value="0.01" />     <!-- x length (m) -->
     <xacro:property name="leg_link_3_y" value="0.05" />     <!-- y length (m) -->
-    <xacro:property name="foot_mu1" value="100.0" />          <!-- friction coefficient 1 -->
-    <xacro:property name="foot_mu2" value="100.0" />          <!-- friction coefficient 2 -->
     <xacro:property name="leg_link_3_mass"
         value="${pcb_density * (leg_link_3_x * leg_link_3_y * pcb_thickness_z)}" />  <!-- (kg) -->
         
@@ -55,11 +53,17 @@
     <xacro:property name="joint_link_mass"
         value="${pcb_density * (pi * (joint_link_r * joint_link_r) * joint_link_l)}" />  <!-- (kg) -->
 
-    <!-- Revolute Joint Properties -->
+    <!-- Link Friction and -->
+    <xacro:property name="link_kp" value="1000000.0" />  <!-- Contact stiffness -->
+    <xacro:property name="link_kd" value="1.0" />        <!-- Contact damping -->
+    <xacro:property name="link_mu1" value="100.0" />     <!-- Friction coefficient 1 -->
+    <xacro:property name="link_mu2" value="100.0" />     <!-- Friction coefficient 2 -->
+
+    <!-- Revolute Joint Limits -->
     <xacro:property name="joint_upper_limit" value="${pi / 2}" />   <!-- (rad) -->
     <xacro:property name="joint_lower_limit" value="${-pi / 2}" />  <!-- (rad) -->
-    <xacro:property name="joint_effort_limit" value="1.0" />        <!-- (N*m) -->
-    <xacro:property name="joint_velocity_limit" value="0.1" />      <!-- (rad/s) -->
+    <xacro:property name="joint_effort_limit" value="0.01" />        <!-- (N*m) -->
+    <xacro:property name="joint_velocity_limit" value="0.01" />      <!-- (rad/s) -->
     
     <!-- Thorax Leg Joint Attachment Positions -->
     <xacro:property name="leg_spacing" value="${(2 * coxa_x) + leg_link_2_x}" />
@@ -124,6 +128,10 @@
 
         <!-- Gazebo properties -->
         <gazebo reference="thorax">
+            <kp>${link_kp}</kp>
+            <kd>${link_kd}</kd>
+            <mu1>${link_mu1}</mu1>
+            <mu2>${link_mu2}</mu2>
             <material>Gazebo/${color}</material>
         </gazebo>
 
@@ -161,6 +169,10 @@
 
         <!-- Gazebo properties -->
         <gazebo reference="leg${leg_number}_coxa">
+            <kp>${link_kp}</kp>
+            <kd>${link_kd}</kd>
+            <mu1>${link_mu1}</mu1>
+            <mu2>${link_mu2}</mu2>
             <material>Gazebo/${color}</material>
         </gazebo>
     </xacro:macro>
@@ -192,6 +204,10 @@
 
         <!-- Gazebo properties -->
         <gazebo reference="leg${leg_number}_link1">
+            <kp>${link_kp}</kp>
+            <kd>${link_kd}</kd>
+            <mu1>${link_mu1}</mu1>
+            <mu2>${link_mu2}</mu2>
             <material>Gazebo/${color}</material>
         </gazebo>
     </xacro:macro>
@@ -223,6 +239,10 @@
 
         <!-- Gazebo properties -->
         <gazebo reference="leg${leg_number}_link2">
+            <kp>${link_kp}</kp>
+            <kd>${link_kd}</kd>
+            <mu1>${link_mu1}</mu1>
+            <mu2>${link_mu2}</mu2>
             <material>Gazebo/${color}</material>
         </gazebo>
     </xacro:macro>
@@ -254,8 +274,10 @@
 
         <!-- Gazebo properties -->
         <gazebo reference="leg${leg_number}_link3">
-            <mu1>${foot_mu1}</mu1>
-            <mu2>${foot_mu2}</mu2>
+            <kp>${link_kp}</kp>
+            <kd>${link_kd}</kd>
+            <mu1>${link_mu1}</mu1>
+            <mu2>${link_mu2}</mu2>
             <material>Gazebo/${color}</material>
         </gazebo>
     </xacro:macro>
@@ -288,6 +310,10 @@
 
         <!-- Gazebo properties -->
         <gazebo reference="leg${leg_number}_joint_link${link_number}">
+            <kp>${link_kp}</kp>
+            <kd>${link_kd}</kd>
+            <mu1>${link_mu1}</mu1>
+            <mu2>${link_mu2}</mu2>
             <material>Gazebo/${color}</material>
         </gazebo>
     </xacro:macro>
