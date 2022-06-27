@@ -36,12 +36,12 @@ def main():
         print(f"swing_state: {millihex.get_swing_state()}\n")
         rate.sleep()
 
-        # # Test millihex tripod gait
-        # while not rospy.is_shutdown():
-        #     millihex.tripod_gait()
-        #     print(f"stance_state: {millihex.get_stance_state()}")
-        #     print(f"swing_state: {millihex.get_swing_state()}\n")
-        #     rate.sleep()
+        # Test millihex tripod gait
+        while not rospy.is_shutdown():
+            millihex.tripod_gait()
+            print(f"stance_state: {millihex.get_stance_state()}")
+            print(f"swing_state: {millihex.get_swing_state()}\n")
+            rate.sleep()
 
     except rospy.ROSInterruptException:
         pass

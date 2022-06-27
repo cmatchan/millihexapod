@@ -44,6 +44,8 @@
     <!-- Tarsus (Leg Link 3) Properties -->
     <xacro:property name="leg_link_3_x" value="0.01" />     <!-- x length (m) -->
     <xacro:property name="leg_link_3_y" value="0.05" />     <!-- y length (m) -->
+    <xacro:property name="foot_mu1" value="100.0" />          <!-- friction coefficient 1 -->
+    <xacro:property name="foot_mu2" value="100.0" />          <!-- friction coefficient 2 -->
     <xacro:property name="leg_link_3_mass"
         value="${pcb_density * (leg_link_3_x * leg_link_3_y * pcb_thickness_z)}" />  <!-- (kg) -->
         
@@ -56,7 +58,7 @@
     <!-- Revolute Joint Properties -->
     <xacro:property name="joint_upper_limit" value="${pi / 2}" />   <!-- (rad) -->
     <xacro:property name="joint_lower_limit" value="${-pi / 2}" />  <!-- (rad) -->
-    <xacro:property name="joint_effort_limit" value="0.1" />        <!-- (N*m) -->
+    <xacro:property name="joint_effort_limit" value="1.0" />        <!-- (N*m) -->
     <xacro:property name="joint_velocity_limit" value="0.1" />      <!-- (rad/s) -->
     
     <!-- Thorax Leg Joint Attachment Positions -->
@@ -252,6 +254,8 @@
 
         <!-- Gazebo properties -->
         <gazebo reference="leg${leg_number}_link3">
+            <mu1>${foot_mu1}</mu1>
+            <mu2>${foot_mu2}</mu2>
             <material>Gazebo/${color}</material>
         </gazebo>
     </xacro:macro>
