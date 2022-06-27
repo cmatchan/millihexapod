@@ -57,7 +57,7 @@
     <xacro:property name="joint_upper_limit" value="${pi / 2}" />   <!-- (rad) -->
     <xacro:property name="joint_lower_limit" value="${-pi / 2}" />  <!-- (rad) -->
     <xacro:property name="joint_effort_limit" value="0.1" />        <!-- (N*m) -->
-    <xacro:property name="joint_velocity_limit" value="${pi / 4}" />      <!-- (rad/s) -->
+    <xacro:property name="joint_velocity_limit" value="0.1" />      <!-- (rad/s) -->
     
     <!-- Thorax Leg Joint Attachment Positions -->
     <xacro:property name="leg_spacing" value="${(2 * coxa_x) + leg_link_2_x}" />
