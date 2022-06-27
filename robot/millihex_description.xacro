@@ -55,15 +55,15 @@
 
     <!-- Link Friction and -->
     <xacro:property name="link_kp" value="1000000.0" />  <!-- Contact stiffness -->
-    <xacro:property name="link_kd" value="1.0" />        <!-- Contact damping -->
+    <xacro:property name="link_kd" value="100.0" />        <!-- Contact damping -->
     <xacro:property name="link_mu1" value="100.0" />     <!-- Friction coefficient 1 -->
     <xacro:property name="link_mu2" value="100.0" />     <!-- Friction coefficient 2 -->
 
     <!-- Revolute Joint Limits -->
     <xacro:property name="joint_upper_limit" value="${pi / 2}" />   <!-- (rad) -->
     <xacro:property name="joint_lower_limit" value="${-pi / 2}" />  <!-- (rad) -->
-    <xacro:property name="joint_effort_limit" value="0.01" />        <!-- (N*m) -->
-    <xacro:property name="joint_velocity_limit" value="0.01" />      <!-- (rad/s) -->
+    <xacro:property name="joint_effort_limit" value="1.0" />        <!-- (N*m) -->
+    <xacro:property name="joint_velocity_limit" value="1.0" />      <!-- (rad/s) -->
     
     <!-- Thorax Leg Joint Attachment Positions -->
     <xacro:property name="leg_spacing" value="${(2 * coxa_x) + leg_link2_x}" />

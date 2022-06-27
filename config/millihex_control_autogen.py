@@ -6,7 +6,7 @@ def main():
     Enables easy changes to be made to PID values."""
     
     # Change PID values for joint controller here
-    p = 0.1
+    p = 0.2
     i = 0.0
     d = 0.0
 
