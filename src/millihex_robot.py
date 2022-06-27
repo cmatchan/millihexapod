@@ -28,7 +28,7 @@ class Robot:
 
                     # Initialize publisher command
                     start_publisher_command = f"self.{publisher_name} = " \
-                        f"rospy.Publisher('{publisher_topic}', Float64, queue_size=1, latch=True)"
+                        f"rospy.Publisher('{publisher_topic}', Float64, queue_size=10, latch=True)"
 
                     # Execute command string as a function
                     exec(start_publisher_command)
@@ -115,9 +115,9 @@ class Robot:
         High stance: stance = 1"""
         for leg_number in legs:
             if stance == 0:         # Set joint angle for low stance
-                joint_angle = 0.4
+                joint_angle = 0.2
             elif stance == 1:       # Set joint angle for high stance
-                joint_angle = 0.8
+                joint_angle = 0.6
             else:                   # Stance = -1, set leg to lie down
                 joint_angle = 0.0
                 self.set_joint_position(leg_number, 2, joint_angle)
@@ -139,7 +139,7 @@ class Robot:
         Swing forward: swing = 1"""
         for leg_number in legs:
             if swing == 1:          # Set joint angle to forward swing
-                joint_angle = 1.0
+                joint_angle = 0.6
             else:                   # Swing = 0, set to neutral swing
                 joint_angle = 0.0
 
