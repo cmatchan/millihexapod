@@ -29,6 +29,17 @@ def main():
         print(f"swing_state: {millihex.get_swing_state()}\n")
         rate.sleep()
 
+        # for i in range((int) (num_legs / 2)):
+        #     millihex.set_joint_position(i+1, 1, -np.pi/4)
+        #     millihex.set_joint_position(i+1+3, 1, np.pi/4)
+
+        # rate.sleep()
+        # millihex.set_joint_position(1, 1, 0)
+        # rate.sleep()
+        # millihex.set_joint_position(1, 1, np.pi/4)
+        # rate.sleep()
+        # millihex.set_joint_position(1, 1, 0)
+        # rate.sleep()
         # millihex.set_joint_position(1, 1, -np.pi/4)
 
         # x = 0.0
@@ -38,17 +49,17 @@ def main():
         #     rate.sleep()
         #     x = x + 0.05
 
-        millihex.stand_up()
-        print(f"stance_state: {millihex.get_stance_state()}")
-        print(f"swing_state: {millihex.get_swing_state()}\n")
-        rate.sleep()
+        # millihex.stand_up()
+        # print(f"stance_state: {millihex.get_stance_state()}")
+        # print(f"swing_state: {millihex.get_swing_state()}\n")
+        # rate.sleep()
 
-        # # Test millihex tripod gait
-        # while not rospy.is_shutdown():
-        #     millihex.tripod_gait()
-        #     print(f"stance_state: {millihex.get_stance_state()}")
-        #     print(f"swing_state: {millihex.get_swing_state()}\n")
-        #     rate.sleep()
+        # Test millihex tripod gait
+        while not rospy.is_shutdown():
+            millihex.tripod_gait()
+            print(f"stance_state: {millihex.get_stance_state()}")
+            print(f"swing_state: {millihex.get_swing_state()}\n")
+            rate.sleep()
 
     except rospy.ROSInterruptException:
         pass

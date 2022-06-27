@@ -2,90 +2,90 @@ millihex:
     # Publish all joint states -----------------------------------
     joint_state_controller:
         type: joint_state_controller/JointStateController
-        publish_rate: 50
+        publish_rate: 100
 
     # Joint position controllers ---------------------------------------
     # Leg 1
     leg1_joint1_position_controller:
         type: effort_controllers/JointPositionController
         joint: leg1_joint1
-        pid: {p: 0.2, i: 0.0, d: 0.0}
+        pid: {p: 0.1, i: 0.0, d: 8.03e-05}
     leg1_joint2_position_controller:
         type: effort_controllers/JointPositionController
         joint: leg1_joint2
-        pid: {p: 0.2, i: 0.0, d: 0.0}
+        pid: {p: 0.1, i: 0.0, d: 8.03e-05}
     leg1_joint3_position_controller:
         type: effort_controllers/JointPositionController
         joint: leg1_joint3
-        pid: {p: 0.2, i: 0.0, d: 0.0}
+        pid: {p: 0.1, i: 0.0, d: 8.03e-05}
 
     # Leg 2
     leg2_joint1_position_controller:
         type: effort_controllers/JointPositionController
         joint: leg2_joint1
-        pid: {p: 0.2, i: 0.0, d: 0.0}
+        pid: {p: 0.1, i: 0.0, d: 8.03e-05}
     leg2_joint2_position_controller:
         type: effort_controllers/JointPositionController
         joint: leg2_joint2
-        pid: {p: 0.2, i: 0.0, d: 0.0}
+        pid: {p: 0.1, i: 0.0, d: 8.03e-05}
     leg2_joint3_position_controller:
         type: effort_controllers/JointPositionController
         joint: leg2_joint3
-        pid: {p: 0.2, i: 0.0, d: 0.0}
+        pid: {p: 0.1, i: 0.0, d: 8.03e-05}
 
     # Leg 3
     leg3_joint1_position_controller:
         type: effort_controllers/JointPositionController
         joint: leg3_joint1
-        pid: {p: 0.2, i: 0.0, d: 0.0}
+        pid: {p: 0.1, i: 0.0, d: 8.03e-05}
     leg3_joint2_position_controller:
         type: effort_controllers/JointPositionController
         joint: leg3_joint2
-        pid: {p: 0.2, i: 0.0, d: 0.0}
+        pid: {p: 0.1, i: 0.0, d: 8.03e-05}
     leg3_joint3_position_controller:
         type: effort_controllers/JointPositionController
         joint: leg3_joint3
-        pid: {p: 0.2, i: 0.0, d: 0.0}
+        pid: {p: 0.1, i: 0.0, d: 8.03e-05}
 
     # Leg 4
     leg4_joint1_position_controller:
         type: effort_controllers/JointPositionController
         joint: leg4_joint1
-        pid: {p: 0.2, i: 0.0, d: 0.0}
+        pid: {p: 0.1, i: 0.0, d: 8.03e-05}
     leg4_joint2_position_controller:
         type: effort_controllers/JointPositionController
         joint: leg4_joint2
-        pid: {p: 0.2, i: 0.0, d: 0.0}
+        pid: {p: 0.1, i: 0.0, d: 8.03e-05}
     leg4_joint3_position_controller:
         type: effort_controllers/JointPositionController
         joint: leg4_joint3
-        pid: {p: 0.2, i: 0.0, d: 0.0}
+        pid: {p: 0.1, i: 0.0, d: 8.03e-05}
 
     # Leg 5
     leg5_joint1_position_controller:
         type: effort_controllers/JointPositionController
         joint: leg5_joint1
-        pid: {p: 0.2, i: 0.0, d: 0.0}
+        pid: {p: 0.1, i: 0.0, d: 8.03e-05}
     leg5_joint2_position_controller:
         type: effort_controllers/JointPositionController
         joint: leg5_joint2
-        pid: {p: 0.2, i: 0.0, d: 0.0}
+        pid: {p: 0.1, i: 0.0, d: 8.03e-05}
     leg5_joint3_position_controller:
         type: effort_controllers/JointPositionController
         joint: leg5_joint3
-        pid: {p: 0.2, i: 0.0, d: 0.0}
+        pid: {p: 0.1, i: 0.0, d: 8.03e-05}
 
     # Leg 6
     leg6_joint1_position_controller:
         type: effort_controllers/JointPositionController
         joint: leg6_joint1
-        pid: {p: 0.2, i: 0.0, d: 0.0}
+        pid: {p: 0.1, i: 0.0, d: 8.03e-05}
     leg6_joint2_position_controller:
         type: effort_controllers/JointPositionController
         joint: leg6_joint2
-        pid: {p: 0.2, i: 0.0, d: 0.0}
+        pid: {p: 0.1, i: 0.0, d: 8.03e-05}
     leg6_joint3_position_controller:
         type: effort_controllers/JointPositionController
         joint: leg6_joint3
-        pid: {p: 0.2, i: 0.0, d: 0.0}
+        pid: {p: 0.1, i: 0.0, d: 8.03e-05}
 

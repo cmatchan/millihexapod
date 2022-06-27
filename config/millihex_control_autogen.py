@@ -6,9 +6,9 @@ def main():
     Enables easy changes to be made to PID values."""
     
     # Change PID values for joint controller here
-    p = 0.2
+    p = 0.1
     i = 0.0
-    d = 0.0
+    d = 0.0000803
 
     # Millihex leg and joint count
     num_legs = 6
@@ -21,7 +21,7 @@ def main():
                 "    # Publish all joint states -----------------------------------\n"\
                 "    joint_state_controller:\n"\
                 "        type: joint_state_controller/JointStateController\n"\
-                "        publish_rate: 50\n\n"\
+                "        publish_rate: 100\n\n"\
                 "    # Joint position controllers ---------------------------------------\n")
 
         # Write joint_position_controller publishers
