@@ -138,7 +138,7 @@ class Robot:
         Swing forward: swing = 1"""
         for leg_number in legs:
             if swing == 1:          # Set joint angle to forward swing
-                joint_angle = 0.6
+                joint_angle = 0.8
             else:                   # Swing = 0, set to neutral swing
                 joint_angle = 0.0
 
