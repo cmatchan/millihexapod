@@ -293,6 +293,12 @@
                 <xacro:cylinder_inerta mass="${joint_link_mass}"
                     r="${joint_link_r}" l="${joint_link_l}" />
             </inertial>
+            <collision>
+                <origin xyz="0 0 0" rpy="0 ${pi / 2} ${yaw}" />
+                <geometry>
+                    <cylinder radius="${joint_link_r}" length="${joint_link_l}" />
+                </geometry>
+            </collision>
             <visual>
                 <origin xyz="0 0 0" rpy="0 ${pi / 2} ${yaw}" />
                 <geometry>

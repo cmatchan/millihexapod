@@ -35,7 +35,7 @@ class Robot:
 
                     check_num_pub_connections = f"self.{publisher_name}.get_num_connections() < 1"
                     while exec(check_num_pub_connections):
-                        rate = rospy.Rate(1)
+                        rate = rospy.Rate(100)
                         rate.sleep()
 
                     self.num_joint_publishers = self.num_joint_publishers + 1
@@ -66,7 +66,7 @@ class Robot:
     def callback(self, ros_data):
         """Subscriber callback function of /millihex/joint_states topic."""
         self.joint_positions = ros_data.position    # Update joint positions
-        rate = rospy.Rate(1)
+        rate = rospy.Rate(100)
         rate.sleep()
 
 
@@ -94,8 +94,7 @@ class Robot:
 
         # Publish joint_position to joint publisher
         publish_command = f"self.{publisher_name}.publish({joint_position})"
-
-        exec(publish_command)       # Execute string as a function
+        exec(publish_command)       # Publish joint position to controller
 
 
     def get_stance_state(self):
@@ -115,7 +114,7 @@ class Robot:
         High stance: stance = 1"""
         for leg_number in legs:
             if stance == 0:         # Set joint angle for low stance
-                joint_angle = 0.2
+                joint_angle = 0.3
             elif stance == 1:       # Set joint angle for high stance
                 joint_angle = 0.6
             else:                   # Stance = -1, set leg to lie down
