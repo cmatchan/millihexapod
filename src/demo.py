@@ -8,9 +8,9 @@ def main():
     """Initializes ROS node for robot"""
     try:
         rospy.init_node('robot_walk', anonymous=True)       # Initialize ROS node
-        rate = rospy.Rate(0.5)                              # Set refresh rate
+        rate = rospy.Rate(1)                                # Set refresh rate
 
-        # Initialize Millihexapod object to spawn millihex
+        # Initialize Millihexapod object
         millihex = Millihexapod()
 
         # Confirm that all publishers connected
@@ -28,10 +28,18 @@ def main():
 
         print(f"Joint States Subscriber connections = {millihex.subscriber.get_num_connections()}\n")
         
-        # Reset millihex to lie down
+        # Command Millihex to lie down
+        print("Millihex lie down:")
         millihex.down()
-        print(f"stance_state: {millihex.get_stance_state()}")
-        print(f"swing_state: {millihex.get_swing_state()}\n")
+        rate.sleep()
+        print(f"{millihex.joint_positions}\n")
+        rate.sleep()
+
+        # Command Millihex to lie down
+        print("Millihex stand up:")
+        millihex.up()
+        rate.sleep()
+        print(f"{millihex.joint_positions}\n")
         rate.sleep()
 
         # Test joint movement at 100 Hz
@@ -57,24 +65,24 @@ def main():
 
         rate.sleep()
         
-        # Reset millihex to lie down
-        millihex.down()
-        print(f"stance_state: {millihex.get_stance_state()}")
-        print(f"swing_state: {millihex.get_swing_state()}\n")
-        rate.sleep()
+        # # Reset millihex to lie down
+        # millihex.down()
+        # print(f"stance_state: {millihex.get_stance_state()}")
+        # print(f"swing_state: {millihex.get_swing_state()}\n")
+        # rate.sleep()
         
-        # Command millihex stand up
-        millihex.up()
-        print(f"stance_state: {millihex.get_stance_state()}")
-        print(f"swing_state: {millihex.get_swing_state()}\n")
-        rate.sleep()
+        # # Command millihex stand up
+        # millihex.up()
+        # print(f"stance_state: {millihex.get_stance_state()}")
+        # print(f"swing_state: {millihex.get_swing_state()}\n")
+        # rate.sleep()
 
-        # Test millihex tripod gait
-        while not rospy.is_shutdown():
-            millihex.tripod_gait()
-            print(f"stance_state: {millihex.get_stance_state()}")
-            print(f"swing_state: {millihex.get_swing_state()}\n")
-            rate.sleep()
+        # # Test millihex tripod gait
+        # while not rospy.is_shutdown():
+        #     millihex.tripod_gait()
+        #     print(f"stance_state: {millihex.get_stance_state()}")
+        #     print(f"swing_state: {millihex.get_swing_state()}\n")
+        #     rate.sleep()
 
     except rospy.ROSInterruptException:
         pass

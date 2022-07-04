@@ -355,7 +355,7 @@
                    upper="${joint_upper_limit}"
                    effort="${joint_effort_limit}"
                    velocity="${joint_velocity_limit}" />
-            <axis xyz="-1 0 0" />
+            <axis xyz="1 0 0" />
         </joint>
         <xacro:leg_transmission leg_number="${leg_number}" joint_number="1" />
 
@@ -385,7 +385,7 @@
                    upper="${joint_upper_limit}"
                    effort="${joint_effort_limit}"
                    velocity="${joint_velocity_limit}" />
-            <axis xyz="0 -1 0" />
+            <axis xyz="0 1 0" />
         </joint>
         <xacro:leg_transmission leg_number="${leg_number}" joint_number="2" />
         
@@ -414,7 +414,7 @@
                    upper="${joint_upper_limit}"
                    effort="${joint_effort_limit}"
                    velocity="${joint_velocity_limit}" />
-            <axis xyz="-1 0 0" />
+            <axis xyz="1 0 0" />
         </joint>
         <xacro:leg_transmission leg_number="${leg_number}" joint_number="3" />
 

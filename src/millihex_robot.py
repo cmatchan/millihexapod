@@ -19,6 +19,10 @@ class Millihexapod:
         self.joints_per_leg = JOINTS_PER_LEG
         self.num_joints = NUM_JOINTS
 
+        # Array of joint positions
+        # angle range = [-pi/2, pi/2] rad
+        self.joint_positions = np.zeros(NUM_JOINTS)
+        
         # List of joint publishers
         self.publishers = [None] * NUM_JOINTS
         self.num_joint_publishers = 0
@@ -55,7 +59,7 @@ class Millihexapod:
                         rate.sleep()
                     
                     # Increment publisher count for debugging
-                    self.num_joint_publishers = self.num_joint_publishers + 1
+                    self.num_joint_publishers += 1
 
         # Initialize all joint position controllers for command topic
         start_joint_position_controller_publishers(self)
@@ -63,67 +67,44 @@ class Millihexapod:
         # Subscribe to /millihex/joint_states topic
         self.subscriber = rospy.Subscriber("/millihex/joint_states", JointState, self.callback)
 
-        # Joint positions (rad)
-        # angle range = [-pi/2, pi/2]
-        self.joint_positions = np.zeros(NUM_JOINTS)
-
-        # Leg stance state = {-1, 0, 1}
-        # Lying down = -1
-        # Low stance = 0
-        # High stance = 1
-        self.stance_state = (-1) + np.zeros(NUM_LEGS)
-
-        # Leg swing state = {0, 1}
-        # Neutral = 0
-        # Forward swing = 1
-        self.swing_state = np.zeros(NUM_LEGS)      
-
 
     def callback(self, ros_data):
         """
         Subscriber callback function of /millihex/joint_states topic.
         """
-        # Convert /joint_states joint position tuple to an array
+        # Convert /joint_states joint position tuple to array
         self.joint_positions = np.asarray(ros_data.position)
         rate = rospy.Rate(100)
         rate.sleep()
 
+    
+    def init_joint_position_array(self):
+        """
+        Returns a joint position array following joint axis polarity
+        for right side and left side legs according to Right-Hand-Rule.
+        
+        Positive joint effort causes right side links to rotate up.
+        Positive joint effor causes left side links to rotate down.
+
+        Returns:
+            [-1 -1 -1 -1 1 1 1 1]
+        """
+        # Get index of middle joint
+        middle_joint = int(NUM_JOINTS / 2)
+
+        # Set right legs to move in opposite direction to left legs
+        position_array = np.ones(NUM_JOINTS)
+        position_array[:middle_joint] = -1
+
+        return position_array
+
 
     def get_joint_index(self, leg_number, joint_number):
         """
-        Computes the index of a given leg joint for a joint vector.
+        Returns an array of updated 
         """
         joint_index = (leg_number - 1) * JOINTS_PER_LEG + (joint_number - 1)
         return joint_index
-
-
-    def get_joint_position(self, leg_number, joint_number):
-        """
-        Returns the current position of joint_number in leg_number.
-        """
-        joint_index = self.get_joint_index(leg_number, joint_number)
-        return self.joint_positions[joint_index]
-
-
-    def get_all_joint_positions(self):
-        """
-        Returns a tuple of all robot joint positions.
-        
-        joint_positions is an array of length NUM_JOINTS.
-        """
-        return self.joint_positions
-
-
-    def set_joint_position(self, leg_number, joint_number, joint_position):
-        """
-        Publishes joint_position to specified leg_number, joint_number.
-        """
-        # Name of joint publisher = "leg#_joint#_pub"
-        publisher_name = f"leg{leg_number}_joint{joint_number}_pub"
-
-        # Publish joint_position to joint publisher
-        publish_command = f"self.{publisher_name}.publish({joint_position})"
-        exec(publish_command)       # Publish joint position to controller
     
 
     def set_joint_positions(self, new_joint_positions = np.zeros(NUM_JOINTS), move_rate = 100):
@@ -132,87 +113,40 @@ class Millihexapod:
 
         joint_positions is an array of length NUM_JOINTS.
         """
-        for i in range(NUM_JOINTS):
-            self.publishers[i].publish(new_joint_positions[i])
+        # Determine rotation direction for joints
+        rotation = self.init_joint_position_array()
+        print(f"rotation: {rotation}\n")
+        rotation[new_joint_positions < self.joint_positions] *= -1
+        print(f"rotation: {rotation}\n")
+        print(f"new_joint_positions: {new_joint_positions}\n")
+        print(f"self.joint_positions: {self.joint_positions}\n")
+        print(f"rotation: {rotation}\n")
 
+        rate = rospy.Rate(move_rate)
+        while np.any(np.absolute(self.joint_positions - new_joint_positions) > 0.1):
+            for i in range(NUM_JOINTS):
+                if ((self.joint_positions[i] - new_joint_positions[i]) > 0.1):
+                    d_theta = self.joint_positions[i] + rotation[i] * 0.01
+                    self.publishers[i].publish(d_theta)
+                
+            rate.sleep()
 
-    def get_stance_state(self):
-        """
-        Returns stance state vector of robot joints.
-        """
-        return self.stance_state
-
-
-    def get_swing_state(self):
-        """
-        Returns swing state vector of robot joints.
-        """
-        return self.swing_state
-
-
-    def set_leg_stance(self, legs = [], stance = -1):
-        """
-        Commands leg stance position.
-        Lay down: stance = -1
-        Low stance: stance = 0
-        High stance: stance = 1
-        """
-        for leg_number in legs:
-            if stance == 0:         # Set joint angle for low stance
-                joint_angle = 0.3
-            elif stance == 1:       # Set joint angle for high stance
-                joint_angle = 0.6
-            else:                   # Stance = -1, set leg to lie down
-                joint_angle = 0.0
-                self.set_joint_position(leg_number, 2, joint_angle)
-
-            self.stance_state[leg_number - 1] = stance
-
-            # LHS leg joints have flipped axes
-            if leg_number > (int) (NUM_LEGS / 2):
-                joint_angle = (-1) * joint_angle
-
-            # Use joints 1 and 3 for stance positioning
-            self.set_joint_position(leg_number, 1, joint_angle)
-            self.set_joint_position(leg_number, 3, joint_angle)
-
-    
-    def set_leg_swing(self, legs = [], swing = 0):
-        """
-        Commands leg swing position.
-        Neutral: swing = 0
-        Swing forward: swing = 1
-        """
-        for leg_number in legs:
-            if swing == 1:          # Set joint angle to forward swing
-                joint_angle = 0.8
-            else:                   # Swing = 0, set to neutral swing
-                joint_angle = 0.0
-
-            self.swing_state[leg_number - 1] = swing
-
-            # LHS leg joints have flipped axes
-            if leg_number > (int) (NUM_LEGS / 2):
-                joint_angle = (-1) * joint_angle
-
-            # Use joint 2 for swing positioning
-            self.set_joint_position(leg_number, 2, joint_angle)
-
-
-    def up(self):
+    def up(self, joint_angle = 0.4, move_rate = 100):
         """
         Commands robot to stand up with all legs in low stance position.
         """
-        legs = np.arange(0, NUM_LEGS) + 1
-        self.set_leg_stance(legs, stance = 0)
+        # Set joint position array
+        new_joint_positions = self.init_joint_position_array()
+        new_joint_positions *= joint_angle
+
+        self.set_joint_positions(new_joint_positions, move_rate)
     
 
-    def down(self):
+    def down(self, move_rate = 100):
         """
         Commands robot to lay down flat.
         """
-        legs = np.arange(0, NUM_LEGS) + 1
-        self.set_leg_stance(legs, stance = -1)
+        self.set_joint_positions(new_joint_positions = np.zeros(NUM_JOINTS), move_rate = move_rate)
         
 
     def compute_ik(self):
