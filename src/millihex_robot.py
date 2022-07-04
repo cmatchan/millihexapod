@@ -44,8 +44,7 @@ class Robot:
         start_joint_position_controller_publishers(self)
 
         # Subscribe to millihex/joint_states topic
-        self.subscriber = rospy.Subscriber("/millihex/joint_states", \
-            JointState, self.callback)
+        self.subscriber = rospy.Subscriber("/millihex/joint_states", JointState, self.callback)
 
         # Robot joint positions
         # angles = [-pi/2, pi/2]
