@@ -2,32 +2,34 @@
 import sys
 import rospy
 import numpy as np
-from millihex_robot import Robot
+from millihex_robot import Millihexapod
 
 def main():
     """Initializes ROS node for robot"""
     try:
         rospy.init_node('robot_walk', anonymous=True)       # Initialize ROS node
-        rate = rospy.Rate(0.5)        # Set refresh rate
+        rate = rospy.Rate(0.5)                              # Set refresh rate
 
-        # Initialize a Robot object to spawn millihex
-        num_legs = 6
-        joints_per_leg = 3
-        millihex = Robot(num_legs, joints_per_leg)
+        # Initialize Millihexapod object to spawn millihex
+        millihex = Millihexapod()
 
         # Confirm that all publishers connected
-        print("ROBOT INITIALIZED")
+        print("\nMILLIHEXAPOD INITIALIZED")
         print(f"Joint Position Publisher connections = {millihex.num_joint_publishers}\n")
 
+        print(f"Publishers:")
+        for i in range(millihex.num_joints):
+            print(f"{millihex.publishers[i].name}")
+
         # Wait for rosnode to connect to subscriber
-        print("Waiting for Joint States Subscriber...")
+        print("\nWaiting for Joint States Subscriber...")
         while millihex.subscriber.get_num_connections() < 1:
             rate.sleep()
 
         print(f"Joint States Subscriber connections = {millihex.subscriber.get_num_connections()}\n")
         
-        # Reset millihex to lying down
-        millihex.lay_down()
+        # Reset millihex to lie down
+        millihex.down()
         print(f"stance_state: {millihex.get_stance_state()}")
         print(f"swing_state: {millihex.get_swing_state()}\n")
         rate.sleep()
@@ -36,7 +38,7 @@ def main():
         x = 0.0
         angle_rate = rospy.Rate(100)
         while (x < np.pi):
-            for i in range((int) (num_legs / 2)):
+            for i in range((int) (millihex.num_legs / 2)):
                 i = i + 1
                 angle = np.sin(x) * (np.pi / 2)
                 print(f"angle = {angle}")
@@ -55,14 +57,14 @@ def main():
 
         rate.sleep()
         
-        # Reset millihex to lying down
-        millihex.lay_down()
+        # Reset millihex to lie down
+        millihex.down()
         print(f"stance_state: {millihex.get_stance_state()}")
         print(f"swing_state: {millihex.get_swing_state()}\n")
         rate.sleep()
         
-        # Test millihex stand up
-        millihex.stand_up()
+        # Command millihex stand up
+        millihex.up()
         print(f"stance_state: {millihex.get_stance_state()}")
         print(f"swing_state: {millihex.get_swing_state()}\n")
         rate.sleep()
