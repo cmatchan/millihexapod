@@ -16,17 +16,18 @@ def main():
         millihex = Millihexapod()
         
         # Command Millihex to lie down
-        print("Millihex lie down:")
+        print("MILLIHEX DOWN:")
         millihex.down()
-        rate.sleep()
-        print(f"{millihex.joint_positions}\n")
         rate.sleep()
 
         # Command Millihex to stand up
-        print("Millihex stand up:")
+        print("MILLIHEX UP:")
         millihex.up()
         rate.sleep()
-        print(f"{millihex.joint_positions}\n")
+
+        # Command Millihex to lie down
+        print("MILLIHEX DOWN:")
+        millihex.down()
         rate.sleep()
 
         # # Test joint movement at 100 Hz
