@@ -14,19 +14,18 @@ def main():
         millihex = Millihexapod()
         rate = rospy.Rate(0.5)
         
-        # Command Millihex to lie down
-        print("MILLIHEX DOWN:")
         millihex.down()
         rate.sleep()
 
-        # Command Millihex to stand up
-        print("MILLIHEX UP:")
-        millihex.up()
+        millihex.up(joint_angle = -(np.pi /2))
         rate.sleep()
 
-        # Command Millihex to lie down
-        print("MILLIHEX DOWN:")
         millihex.down()
+        rate.sleep()
+        
+        joints = np.array([1, 3, 5])
+        target_joint_position = np.pi / 4
+        millihex.set_joint_positions(joints, target_joint_position)
         rate.sleep()
 
     except rospy.ROSInterruptException:

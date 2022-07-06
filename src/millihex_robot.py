@@ -117,10 +117,11 @@ class Millihexapod:
         middle_joint = int(NUM_JOINTS / 2)
         right_side_joints = joints[joints < middle_joint]
         left_side_joints = joints[joints >= middle_joint]
+        print(f"right_side_joints:\n{right_side_joints}\n")
         
         # Initialize array of target joint positions
         rotation_directions = np.ones(np.size(joints))
-        rotation_directions[right_side_joints] *= -1
+        rotation_directions[joints < middle_joint] *= -1
         target_joint_positions = np.zeros(np.size(joints)) + target_joint_position
         target_joint_positions *= rotation_directions
         print(f"rotation_directions:\n{rotation_directions}\n")
@@ -139,8 +140,8 @@ class Millihexapod:
             print(f"theta_step:\n{theta_step}")
             print(f"theta:\n{theta}\n\n")
             
-            for j in joints:
-                self.publishers[j].publish(theta[j])
+            for i in range(np.size(joints)):
+                self.publishers[joints[i]].publish(theta[i])
 
             rate.sleep()
 
