@@ -98,8 +98,8 @@ class Millihexapod:
         self.joint_positions = np.asarray(ros_data.position)
 
 
-    def set_joint_positions(self, joints = [], target_joint_position = 0, \
-        move_rate = 100, step = 0.005):
+    def set_joint_positions(self, joints = [], target_joint_position = 0.0, \
+        move_rate = 100, step = 0.01):
         """
         Publishes joint_positions to corresponding joint.
         joint_positions is an array of length NUM_JOINTS.
@@ -107,35 +107,45 @@ class Millihexapod:
         # Set rotation speed of joint rotation
         rate = rospy.Rate(move_rate)
 
-        # Compute average of current joint angles
+        # Get current positions of joints to rotate
         joints = np.asarray(joints)
         current_joint_positions = self.joint_positions[joints]
-        current_joint_positions_avg = np.sum(np.absolute(current_joint_positions)) / joints.size
-        print(f"joint_positions:\n{current_joint_positions}")
-        print(f"current_joint_positions_avg: {current_joint_positions_avg}")
-        print(f"target_joint_position: {target_joint_position}\n")
+        print(f"current_joint_positions:\n{current_joint_positions}\n")
+
+        # Right side joints rotate upwards by Right-Hand-Rule
+        # Left side joints rotate downwards by Right-Hand-Rule
+        middle_joint = int(NUM_JOINTS / 2)
+        right_side_joints = joints[joints < middle_joint]
+        left_side_joints = joints[joints >= middle_joint]
+        
+        # Initialize array of target joint positions
+        rotation_directions = np.ones(np.size(joints))
+        rotation_directions[right_side_joints] *= -1
+        target_joint_positions = np.zeros(np.size(joints)) + target_joint_position
+        target_joint_positions *= rotation_directions
+        print(f"rotation_directions:\n{rotation_directions}\n")
 
         # Publish incremental joint angle command to joints
-        theta_right = current_joint_positions_avg
-        theta_left = current_joint_positions_avg
-        while (np.absolute((np.absolute(theta_right) - np.absolute(target_joint_position))) > step):
-            if (target_joint_position > current_joint_positions_avg):
-                theta_right -= step
-                theta_left += step
-            elif (target_joint_position < current_joint_positions_avg):
-                theta_right += step
-                theta_left -= step
+        theta = current_joint_positions
+        d_theta = target_joint_positions - theta
+        while (np.any(np.abs(d_theta) >= step)):
+            print(f"target_joint_positions:\n{target_joint_positions}")
+            print(f"d_theta:\n{d_theta}")
 
-            middle_joint = int(NUM_JOINTS / 2)
-            for j in joints[joints < middle_joint]:
-                self.publishers[j].publish(theta_right)
-            for j in joints[joints >= middle_joint]:
-                self.publishers[j].publish(theta_left)
+            # Initialize incremental step array
+            theta_step = np.sign(d_theta) * step
+            theta += theta_step
+            d_theta = target_joint_positions - theta
+            print(f"theta_step:\n{theta_step}")
+            print(f"theta:\n{theta}\n\n")
+            
+            for j in joints:
+                self.publishers[j].publish(theta[j])
 
             rate.sleep()
 
 
-    def up(self, joint_angle = 0.4, move_rate = 100, step = 0.005):
+    def up(self, joint_angle = 0.4, move_rate = 100, step = 0.01):
         """
         Commands robot to stand up with all legs in low stance position.
         """
@@ -143,7 +153,7 @@ class Millihexapod:
         self.set_joint_positions(joints, joint_angle, move_rate, step)
     
 
-    def down(self, move_rate = 100, step = 0.005):
+    def down(self, move_rate = 100, step = 0.01):
         """
         Commands robot to lay down flat.
         """

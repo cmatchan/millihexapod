@@ -12,7 +12,7 @@ def main():
         # Initialize ROS node and Millihexapod
         rospy.init_node('robot_walk', anonymous=True)
         millihex = Millihexapod()
-        rate = rospy.Rate(1)
+        rate = rospy.Rate(0.5)
         
         # Command Millihex to lie down
         print("MILLIHEX DOWN:")
