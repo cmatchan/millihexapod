@@ -16,6 +16,8 @@ class Millihexapod:
         Start ROS publishers & ROS subscribers.
         """
         print("\nInitializing Millihexapod...\n")
+
+        # Set sleep rate to pause between messages
         pause = rospy.Rate(2)
         pause.sleep()
 
@@ -25,7 +27,14 @@ class Millihexapod:
         self.num_joints = NUM_JOINTS
 
         # Array of joint positions
-        # angle limits = [-pi/2, pi/2] rad
+        # Angle limits = [-pi/2, pi/2] rad
+        # Joint array order:
+        #   [leg1_joint1 leg1_joint2 leg1_joint3
+        #    leg2_joint1 leg2_joint2 leg2_joint3
+        #    leg3_joint1 leg3_joint2 leg3_joint3
+        #    leg4_joint1 leg4_joint2 leg4_joint3
+        #    leg5_joint1 leg5_joint2 leg5_joint3
+        #    leg6_joint1 leg6_joint2 leg6_joint3]
         self.joint_positions = np.zeros(NUM_JOINTS)
         
         # List of joint publishers
@@ -66,12 +75,9 @@ class Millihexapod:
         Initialize joint publishers to the topic:
             /millihex/leg#_joint#_position_controller/command
         """
-        for i in range(NUM_LEGS):
-            for j in range(JOINTS_PER_LEG):
-                # Index leg and joint from 1
-                leg_number = i + 1
-                joint_number = j + 1
-
+        # Leg and joint number indices start from 1
+        for leg_number in range(1, NUM_LEGS + 1):
+            for joint_number in range(1, JOINTS_PER_LEG + 1):
                 # Name of topic = "/millihex/leg#_joint#_position_controller/command"
                 publisher_topic = f"/millihex/leg{leg_number}" \
                     f"_joint{joint_number}_position_controller/command"
