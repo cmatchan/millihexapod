@@ -104,30 +104,27 @@ class Millihexapod:
         self.joint_positions = np.asarray(ros_data.position)
 
 
-    def set_joint_positions(self, joints = [], target_joint_position = 0.0, \
-        move_rate = 100, step = 0.01):
+    def set_joint_positions(self, joints=[], target_joint_position=0.0, \
+        step_rate=100, step=0.01):
         """
         Publishes joint_positions to corresponding joint.
         joint_positions is an array of length NUM_JOINTS.
         """
         # Set rotation speed of joint rotation
-        rate = rospy.Rate(move_rate)
+        rate = rospy.Rate(step_rate)
 
         # Get current positions of joints to rotate
-        joints = np.asarray(joints)
+        joints -= 1
         current_joint_positions = self.joint_positions[joints]
         print(f"current_joint_positions:\n{current_joint_positions}\n")
 
         # Right side joints rotate upwards by Right-Hand-Rule
         # Left side joints rotate downwards by Right-Hand-Rule
-        middle_joint = int(NUM_JOINTS / 2)
-        right_side_joints = joints[joints < middle_joint]
-        left_side_joints = joints[joints >= middle_joint]
-        print(f"right_side_joints:\n{right_side_joints}\n")
-        
-        # Initialize array of target joint positions
         rotation_directions = np.ones(np.size(joints))
+        middle_joint = int(NUM_JOINTS / 2)
         rotation_directions[joints < middle_joint] *= -1
+
+        # Initialize array of target joint positions
         target_joint_positions = np.zeros(np.size(joints)) + target_joint_position
         target_joint_positions *= rotation_directions
         print(f"rotation_directions:\n{rotation_directions}\n")
@@ -152,20 +149,20 @@ class Millihexapod:
             rate.sleep()
 
 
-    def up(self, joint_angle = 0.4, move_rate = 100, step = 0.01):
+    def up(self, joint_angle=0.4, step_rate=100, step=0.01):
         """
         Commands robot to stand up with all legs in low stance position.
         """
         joints = np.arange(NUM_JOINTS)
-        self.set_joint_positions(joints, joint_angle, move_rate, step)
+        self.set_joint_positions(joints, joint_angle, step_rate, step)
     
 
-    def down(self, move_rate = 100, step = 0.01):
+    def down(self, step_rate=100, step=0.01):
         """
         Commands robot to lay down flat.
         """
         joints = np.arange(NUM_JOINTS)
-        self.set_joint_positions(joints, 0.0, move_rate, step)
+        self.set_joint_positions(joints, 0.0, step_rate, step)
         
 
     def compute_ik(self):
