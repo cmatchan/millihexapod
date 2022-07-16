@@ -114,9 +114,7 @@ class Millihexapod:
         rate = rospy.Rate(step_rate)
 
         # Get current positions of joints to rotate
-        joints -= 1
         current_joint_positions = self.joint_positions[joints]
-        print(f"current_joint_positions:\n{current_joint_positions}\n")
 
         # Right side joints rotate upwards by Right-Hand-Rule
         # Left side joints rotate downwards by Right-Hand-Rule
@@ -124,28 +122,23 @@ class Millihexapod:
         middle_joint = int(NUM_JOINTS / 2)
         rotation_directions[joints < middle_joint] *= -1
 
-        # Initialize array of target joint positions
+        # Desired joint position target angle
         target_joint_positions = np.zeros(np.size(joints)) + target_joint_position
         target_joint_positions *= rotation_directions
-        print(f"rotation_directions:\n{rotation_directions}\n")
 
-        # Publish incremental joint angle command to joints
+        # Incremental joint angles
         theta = current_joint_positions
         d_theta = target_joint_positions - theta
-        while (np.any(np.abs(d_theta) >= step)):
-            print(f"target_joint_positions:\n{target_joint_positions}")
-            print(f"d_theta:\n{d_theta}")
 
-            # Initialize incremental step array
+        while (np.any(np.abs(d_theta) >= step)):
+            # Compute angle step
             theta_step = np.sign(d_theta) * step
             theta += theta_step
             d_theta = target_joint_positions - theta
-            print(f"theta_step:\n{theta_step}")
-            print(f"theta:\n{theta}\n\n")
             
+            # Publish incremental joint angles
             for i in range(np.size(joints)):
                 self.publishers[joints[i]].publish(theta[i])
-
             rate.sleep()
 
 
