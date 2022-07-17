@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
+import sys
 import rospy
 import numpy as np
+import moveit_commander
 from std_msgs.msg import Float64
 from sensor_msgs.msg import JointState
 
@@ -15,11 +17,20 @@ class Millihexapod:
         Initialize Millihex state parameters and variables.
         Start ROS publishers & ROS subscribers.
         """
+        # Initialize rospy node
         print("\nInitializing Millihexapod...\n")
+        rospy.init_node('millihex_robot', anonymous=True)
 
         # Set sleep rate to pause between messages
         pause = rospy.Rate(2)
         pause.sleep()
+        
+        # Initialize moveit_commander
+        moveit_commander.roscpp_initialize(sys.argv)
+        self.robot = moveit_commander.RobotCommander()
+        self.scene = moveit_commander.PlanningSceneInterface()
+        self.group_name = "leg1"
+        self.move_group = moveit_commander.MoveGroupCommander(group_name)
 
         # Millihex leg and joint count
         self.num_legs = NUM_LEGS
@@ -159,4 +170,19 @@ class Millihexapod:
         
 
     def compute_ik(self):
-        pass
+        planning_frame = self.move_group.get_planning_frame()
+        print("============ Planning frame: %s" % planning_frame)
+
+        # We can also print the name of the end-effector link for this group:
+        eef_link = self.move_group.get_end_effector_link()
+        print("============ End effector link: %s" % eef_link)
+
+        # We can get a list of all the groups in the robot:
+        group_names = self.robot.get_group_names()
+        print("============ Available Planning Groups:", group_names)
+
+        # Sometimes for debugging it is useful to print the entire state of the
+        # robot:
+        print("============ Printing robot state")
+        print(self.robot.get_current_state())
+        print("")
