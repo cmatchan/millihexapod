@@ -30,7 +30,7 @@ class Millihexapod:
         self.robot = moveit_commander.RobotCommander()
         self.scene = moveit_commander.PlanningSceneInterface()
         self.group_name = "leg1"
-        self.move_group = moveit_commander.MoveGroupCommander(group_name)
+        self.move_group = moveit_commander.MoveGroupCommander(self.group_name)
 
         # Millihex leg and joint count
         self.num_legs = NUM_LEGS

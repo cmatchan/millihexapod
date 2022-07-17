@@ -21,4 +21,20 @@
     <!-- Launch robot joint controllers -->
     <include file="$(find millihexapod)/launch/start_controllers.launch" />
 
+
+    <!-- Choose controller manager: fake, simple, or ros_control -->
+    <arg name="moveit_controller_manager" default="ros_control" />
+    <!-- Set execution mode for fake execution controllers -->
+    <arg name="fake_execution_type" default="interpolate" />
+
+    <!-- Run the main MoveIt executable -->
+    <include file="$(find millihexapod)/launch/move_group.launch">
+        <arg name="allow_trajectory_execution" value="true"/>
+        <arg name="moveit_controller_manager" value="$(arg moveit_controller_manager)" />
+        <arg name="fake_execution_type" value="$(arg fake_execution_type)"/>
+        <arg name="info" value="true"/>
+        <arg name="debug" value="false"/>
+        <arg name="pipeline" value="ompl"/>
+    </include>
+
 </launch>
