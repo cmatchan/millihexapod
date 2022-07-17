@@ -5,6 +5,7 @@ import numpy as np
 import moveit_commander
 from std_msgs.msg import Float64
 from sensor_msgs.msg import JointState
+from geometry_msgs.msg import Pose
 
 # Millihex constants
 NUM_LEGS = 6
@@ -17,20 +18,18 @@ class Millihexapod:
         Initialize Millihex state parameters and variables.
         Start ROS publishers & ROS subscribers.
         """
-        # Initialize rospy node
-        print("\nInitializing Millihexapod...\n")
+        # Initialize moveit_commander and rospy node
+        print("\n==================== Initializing Millihexapod ====================")
+
+        # Remap /joint_states to /millihex/joint_states topic for moveit
+        joint_state_topic = ['joint_states:=/millihex/joint_states']
+        moveit_commander.roscpp_initialize(joint_state_topic)
+        self.robot = moveit_commander.RobotCommander()
         rospy.init_node('millihex_robot', anonymous=True)
 
         # Set sleep rate to pause between messages
         pause = rospy.Rate(2)
         pause.sleep()
-        
-        # Initialize moveit_commander
-        moveit_commander.roscpp_initialize(sys.argv)
-        self.robot = moveit_commander.RobotCommander()
-        self.scene = moveit_commander.PlanningSceneInterface()
-        self.group_name = "leg1"
-        self.move_group = moveit_commander.MoveGroupCommander(self.group_name)
 
         # Millihex leg and joint count
         self.num_legs = NUM_LEGS
@@ -52,7 +51,7 @@ class Millihexapod:
         self.publishers = [None] * NUM_JOINTS
 
         # Start all joint position controllers for /command topic
-        print("Waiting for Joint Position Controller Publishers...")
+        print("\nWaiting for Joint Position Controller Publishers...")
         self.start_joint_position_controller_publishers()
         pause.sleep()
 
@@ -66,10 +65,10 @@ class Millihexapod:
             continue
         
         print(f"{self.subscriber.name}, " \
-              f"connections = {self.subscriber.get_num_connections()}\n")
+              f"connections = {self.subscriber.get_num_connections()}")
         pause.sleep()
 
-        print("MILLIHEXAPOD INITIALIZED\n")
+        print("==================== Millihexapod Initialized ====================\n")
         pause.sleep()
 
 
@@ -170,19 +169,30 @@ class Millihexapod:
         
 
     def compute_ik(self):
-        planning_frame = self.move_group.get_planning_frame()
-        print("============ Planning frame: %s" % planning_frame)
+        print("COMPUTE IK:")
 
-        # We can also print the name of the end-effector link for this group:
-        eef_link = self.move_group.get_end_effector_link()
-        print("============ End effector link: %s" % eef_link)
-
-        # We can get a list of all the groups in the robot:
+        # List all the leg groups of Millihex:
         group_names = self.robot.get_group_names()
-        print("============ Available Planning Groups:", group_names)
+        print(f"Planning Groups: {group_names}\n")
 
-        # Sometimes for debugging it is useful to print the entire state of the
-        # robot:
-        print("============ Printing robot state")
-        print(self.robot.get_current_state())
+        # leg1 move_group
+        print("Initializing leg1 move_group...")
+        leg1_move_group = moveit_commander.MoveGroupCommander("leg1")
+        print("")
+
+        leg1_joints = leg1_move_group.get_joints()
+        print(f"leg1_joints: {leg1_joints}")
+
+        leg1_current_pose = leg1_move_group.get_current_pose()
+        print(f"leg1_current_pose: {leg1_current_pose}")
+
+        leg1_pose_goal = [0.0, 0.0, 0.1, 0.0, 0.0, 0.0]
+
+        leg1_move_group.set_pose_target(leg1_pose_goal)
+        plan = leg1_move_group.go(wait=True)
+        
+
+        # # Print the entire state of Millihex
+        # print("Millihex full state:")
+        # print(self.robot.get_current_state())
         print("")
