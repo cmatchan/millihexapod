@@ -22,7 +22,7 @@
     <include file="$(find millihexapod)/launch/start_controllers.launch" />
 
     <!-- Choose controller manager: fake, simple, or ros_control -->
-    <arg name="moveit_controller_manager" default="ros_control" />
+    <arg name="moveit_controller_manager" default="fake" />
     <!-- Set execution mode for fake execution controllers -->
     <arg name="fake_execution_type" default="interpolate" />
 

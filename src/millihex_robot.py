@@ -204,10 +204,10 @@ class Millihexapod:
         req.timeout = rospy.Duration(10)
 
         resp = moveit_compute_ik(req)
-        print(f"RESPONSE:\n{resp.solution.joint_state.position}")
+        print(f"\nIK RESPONSE:\n{resp.solution.joint_state.position}\n")
 
-        # Plan trajectory in RViz
-        print("COMMAND POSE")
-        leg1_move_group.set_joint_value_target(leg1_pose_goal, eef_link, True)
-        plan = leg1_move_group.go(wait=True)
-        leg1_move_group.stop()
+        # # Plan and visualize trajectory in RViz
+        # print("COMMAND POSE")
+        # leg1_move_group.set_joint_value_target(leg1_pose_goal, eef_link, True)
+        # plan = leg1_move_group.go(wait=True)
+        # leg1_move_group.stop()
