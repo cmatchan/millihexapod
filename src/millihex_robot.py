@@ -181,15 +181,25 @@ class Millihexapod:
         print("")
 
         leg1_joints = leg1_move_group.get_joints()
-        print(f"leg1_joints: {leg1_joints}")
+        print("leg1_joints:")
+        print(leg1_joints)
 
         leg1_current_pose = leg1_move_group.get_current_pose()
-        print(f"leg1_current_pose: {leg1_current_pose}")
+        print("leg1_current_pose:")
+        print(leg1_current_pose)
 
-        leg1_pose_goal = [0.0, 0.0, 0.1, 0.0, 0.0, 0.0]
+        eef_link = leg1_move_group.get_end_effector_link()
+        print(f"\neef_link: {eef_link}\n")
 
-        leg1_move_group.set_pose_target(leg1_pose_goal)
+        leg1_pose_goal = leg1_move_group.get_random_pose(eef_link)
+        print("\nleg1_pose_goal:")
+        print(leg1_pose_goal)
+
+        leg1_move_group.set_joint_value_target(leg1_pose_goal, eef_link, True)
+
+        print("\nCOMMAND POSE")
         plan = leg1_move_group.go(wait=True)
+        leg1_move_group.stop()
         
 
         # # Print the entire state of Millihex

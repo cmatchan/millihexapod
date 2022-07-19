@@ -5,9 +5,6 @@ import numpy as np
 from millihex_robot import Millihexapod
 
 def main():
-    """
-    Initializes ROS node for robot.
-    """
     try:
         millihex = Millihexapod()
         rate = rospy.Rate(0.5)
@@ -37,4 +34,4 @@ def main():
         pass
 
 if __name__ == '__main__':
-    sys.exit(main())
+    main()
