@@ -6,6 +6,8 @@ import moveit_commander
 from std_msgs.msg import Float64
 from sensor_msgs.msg import JointState
 from geometry_msgs.msg import Pose
+from moveit_msgs.msg import PositionIKRequest
+from moveit_msgs.srv import GetPositionIK
 
 # Millihex constants
 NUM_LEGS = 6
@@ -175,34 +177,37 @@ class Millihexapod:
         group_names = self.robot.get_group_names()
         print(f"Planning Groups: {group_names}\n")
 
-        # leg1 move_group
+        # Define move_group 'leg1'
         print("Initializing leg1 move_group...")
         leg1_move_group = moveit_commander.MoveGroupCommander("leg1")
-        print("")
 
+        # Get move_group properties
         leg1_joints = leg1_move_group.get_joints()
-        print("leg1_joints:")
-        print(leg1_joints)
-
         leg1_current_pose = leg1_move_group.get_current_pose()
-        print("leg1_current_pose:")
-        print(leg1_current_pose)
-
         eef_link = leg1_move_group.get_end_effector_link()
-        print(f"\neef_link: {eef_link}\n")
 
+        # Get a random pose goal
         leg1_pose_goal = leg1_move_group.get_random_pose(eef_link)
-        print("\nleg1_pose_goal:")
-        print(leg1_pose_goal)
 
+        # Connect to /compute_ik service
+        rospy.wait_for_service('compute_ik')
+        try:
+            moveit_compute_ik = rospy.ServiceProxy('compute_ik', GetPositionIK)
+        except rospy.ServiceException as e:
+            print("Service call failed: %s"%e)
+        
+        req = PositionIKRequest()
+        req.group_name = 'leg1'
+        req.robot_state = self.robot.get_current_state()
+        req.ik_link_name = eef_link
+        req.pose_stamped = leg1_pose_goal
+        req.timeout = rospy.Duration(10)
+
+        resp = moveit_compute_ik(req)
+        print(f"RESPONSE:\n{resp.solution.joint_state.position}")
+
+        # Plan trajectory in RViz
+        print("COMMAND POSE")
         leg1_move_group.set_joint_value_target(leg1_pose_goal, eef_link, True)
-
-        print("\nCOMMAND POSE")
         plan = leg1_move_group.go(wait=True)
         leg1_move_group.stop()
-        
-
-        # # Print the entire state of Millihex
-        # print("Millihex full state:")
-        # print(self.robot.get_current_state())
-        print("")
