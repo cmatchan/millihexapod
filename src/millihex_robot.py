@@ -17,8 +17,18 @@ NUM_JOINTS = NUM_LEGS * JOINTS_PER_LEG
 class Millihexapod:
     def __init__(self):
         """
-        Initialize Millihex state parameters and variables.
-        Start ROS publishers & ROS subscribers.
+        Initializes a Millihex object and starts ROS publishers & ROS subscribers.
+
+        Attributes
+        ----------
+        robot: RobotCommander
+            moveit_commander robot object to get it's current state.
+        num_legs: int
+            
+
+        Methods
+        -------
+
         """
         # Initialize moveit_commander and rospy node
         print("\n==================== Initializing Millihexapod ====================")
@@ -76,7 +86,14 @@ class Millihexapod:
 
     def get_joint_index(self, leg_number, joint_number):
         """
-        Returns an array of updated 
+        Returns the index of a joint in the joint_positions array.
+        
+        Parameters
+        ----------
+
+        Returns
+        -------
+
         """
         joint_index = (leg_number - 1) * JOINTS_PER_LEG + (joint_number - 1)
         return joint_index
@@ -154,6 +171,32 @@ class Millihexapod:
             rate.sleep()
 
 
+     def set_joint_state(self, target_joint_state=[], step_rate=100, step=0.01):
+        """
+        Publishes desired joint state to robot.
+        """
+        # Set rotation rate
+        rate = rospy.Rate(step_rate)
+
+        # Get the current state of Millihex joint positions
+        current_joint_state = self.joint_positions
+
+        # Incremental joint angles
+        theta = current_joint_state
+        d_theta = target_joint_state - theta
+
+        while (np.any(np.abs(d_theta) >= step)):
+            # Compute angle step
+            theta_step = np.sign(d_theta) * step
+            theta += theta_step
+            d_theta = target_joint_positions - theta
+            
+            # Publish incremental joint angles
+            for i in range(np.size(joints)):
+                self.publishers[joints[i]].publish(theta[i])
+            rate.sleep()
+
+
     def up(self, joint_angle=0.4, step_rate=100, step=0.01):
         """
         Commands robot to stand up with all legs in low stance position.
@@ -171,6 +214,9 @@ class Millihexapod:
         
 
     def compute_ik(self):
+        """
+        Commands robot to lay down flat.
+        """
         print("COMPUTE IK:")
 
         # List all the leg groups of Millihex:
@@ -188,6 +234,7 @@ class Millihexapod:
 
         # Get a random pose goal
         leg1_pose_goal = leg1_move_group.get_random_pose(eef_link)
+        print(f"\nTarget Pose:\n{leg1_pose_goal}\n")
 
         # Connect to /compute_ik service
         rospy.wait_for_service('compute_ik')
@@ -203,8 +250,10 @@ class Millihexapod:
         req.pose_stamped = leg1_pose_goal
         req.timeout = rospy.Duration(10)
 
+        # Request IK computation from MoveIt
         resp = moveit_compute_ik(req)
-        print(f"\nIK RESPONSE:\n{resp.solution.joint_state.position}\n")
+        joint_state_target = resp.solution.joint_state.position
+        print(f"\nTarget Joint State:\n{joint_state_target}\n")
 
         # # Plan and visualize trajectory in RViz
         # print("COMMAND POSE")
