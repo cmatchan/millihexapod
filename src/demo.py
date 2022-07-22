@@ -8,25 +8,15 @@ def main():
     try:
         millihex = Millihexapod()
         rate = rospy.Rate(0.5)
-        
+
         millihex.down()
         rate.sleep()
 
-        millihex.compute_ik()
+        millihex.up()
+        rate.sleep()
 
-        # millihex.up(joint_angle = -(np.pi /2))
-        # rate.sleep()
-
-        # millihex.down()
-        # rate.sleep()
-        
-        # joints = np.array([0, 6, 12])
-        # target_joint_position = np.pi / 4
-        # millihex.set_joint_positions(joints, target_joint_position)
-        # rate.sleep()
-        
-        # millihex.down()
-        # rate.sleep()
+        target_joint_state = millihex.compute_ik()
+        millihex.set_joint_state(target_joint_state, step_rate=100, angle_step=0.01)
 
         sys.exit(0)
 

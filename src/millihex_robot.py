@@ -65,7 +65,6 @@ class Millihexapod:
         # Start all joint position controllers for /command topic
         print("\nWaiting for Joint Position Controller Publishers...")
         self.start_joint_position_controller_publishers()
-        pause.sleep()
 
         # Subscribe to /millihex/joint_states topic
         print("\nWaiting for Joint States Subscriber...")
@@ -133,91 +132,56 @@ class Millihexapod:
         self.joint_positions = np.asarray(ros_data.position)
 
 
-    def set_joint_positions(self, joints=[], target_joint_position=0.0, \
-        step_rate=100, step=0.01):
-        """
-        Publishes joint_positions to corresponding joint.
-        joint_positions is an array of length NUM_JOINTS.
-        """
-        # Set rotation speed of joint rotation
-        rate = rospy.Rate(step_rate)
-
-        # Get current positions of joints to rotate
-        current_joint_positions = self.joint_positions[joints]
-
-        # Right side joints rotate upwards by Right-Hand-Rule
-        # Left side joints rotate downwards by Right-Hand-Rule
-        rotation_directions = np.ones(np.size(joints))
-        middle_joint = int(NUM_JOINTS / 2)
-        rotation_directions[joints < middle_joint] *= -1
-
-        # Desired joint position target angle
-        target_joint_positions = np.zeros(np.size(joints)) + target_joint_position
-        target_joint_positions *= rotation_directions
-
-        # Incremental joint angles
-        theta = current_joint_positions
-        d_theta = target_joint_positions - theta
-
-        while (np.any(np.abs(d_theta) >= step)):
-            # Compute angle step
-            theta_step = np.sign(d_theta) * step
-            theta += theta_step
-            d_theta = target_joint_positions - theta
-            
-            # Publish incremental joint angles
-            for i in range(np.size(joints)):
-                self.publishers[joints[i]].publish(theta[i])
-            rate.sleep()
-
-
-     def set_joint_state(self, target_joint_state=[], step_rate=100, step=0.01):
+    def set_joint_state(self, target_joint_state=[], step_rate=100, angle_step=0.01):
         """
         Publishes desired joint state to robot.
         """
         # Set rotation rate
         rate = rospy.Rate(step_rate)
 
-        # Get the current state of Millihex joint positions
-        current_joint_state = self.joint_positions
+        # Get current joint state
+        theta = self.joint_positions
 
-        # Incremental joint angles
-        theta = current_joint_state
-        d_theta = target_joint_state - theta
+        # Compute angle distance to travel
+        d_theta = np.asarray(target_joint_state) - theta
 
-        while (np.any(np.abs(d_theta) >= step)):
-            # Compute angle step
-            theta_step = np.sign(d_theta) * step
-            theta += theta_step
-            d_theta = target_joint_positions - theta
+        while (np.any(np.abs(d_theta) >= angle_step)):
+            # Compute the next step angle for all joints
+            step = np.sign(d_theta) * angle_step
+            theta += step
+            d_theta -= step
             
-            # Publish incremental joint angles
-            for i in range(np.size(joints)):
-                self.publishers[joints[i]].publish(theta[i])
+            # Publish new joint positions
+            for i in range(NUM_JOINTS):
+                self.publishers[i].publish(theta[i])
             rate.sleep()
 
 
-    def up(self, joint_angle=0.4, step_rate=100, step=0.01):
+    def up(self, step_rate=100, angle_step=0.01):
         """
         Commands robot to stand up with all legs in low stance position.
         """
-        joints = np.arange(NUM_JOINTS)
-        self.set_joint_positions(joints, joint_angle, step_rate, step)
+        print("MILLIHEX UP\n")
+        target_joint_state = np.zeros(NUM_JOINTS) + (np.pi / 6)
+        middle_joint = int(NUM_JOINTS / 2)
+        target_joint_state[0:middle_joint] *= -1
+        self.set_joint_state(target_joint_state, step_rate=100, angle_step=0.01)
     
 
-    def down(self, step_rate=100, step=0.01):
+    def down(self, step_rate=100, angle_step=0.01):
         """
         Commands robot to lay down flat.
         """
-        joints = np.arange(NUM_JOINTS)
-        self.set_joint_positions(joints, 0.0, step_rate, step)
+        print("MILLIHEX DOWN\n")
+        target_joint_state = np.zeros(NUM_JOINTS)
+        self.set_joint_state(target_joint_state, step_rate=100, angle_step=0.01)
         
 
     def compute_ik(self):
         """
         Commands robot to lay down flat.
         """
-        print("COMPUTE IK:")
+        print("COMPUTE IK")
 
         # List all the leg groups of Millihex:
         group_names = self.robot.get_group_names()
@@ -252,8 +216,10 @@ class Millihexapod:
 
         # Request IK computation from MoveIt
         resp = moveit_compute_ik(req)
-        joint_state_target = resp.solution.joint_state.position
-        print(f"\nTarget Joint State:\n{joint_state_target}\n")
+        target_joint_state = resp.solution.joint_state.position
+        print(f"\nTarget Joint State:\n{target_joint_state}\n")
+        
+        return target_joint_state
 
         # # Plan and visualize trajectory in RViz
         # print("COMMAND POSE")
