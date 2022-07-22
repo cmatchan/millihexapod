@@ -79,7 +79,7 @@ class Millihexapod:
               f"connections = {self.subscriber.get_num_connections()}")
         pause.sleep()
 
-        print("==================== Millihexapod Initialized ====================\n")
+        print("==================== Millihexapod Initialized =====================\n")
         pause.sleep()
 
 
@@ -205,24 +205,24 @@ class Millihexapod:
         try:
             moveit_compute_ik = rospy.ServiceProxy('compute_ik', GetPositionIK)
         except rospy.ServiceException as e:
-            print("Service call failed: %s"%e)
+            print(f"Service call failed: {e}")
         
-        req = PositionIKRequest()
-        req.group_name = 'leg1'
-        req.robot_state = self.robot.get_current_state()
-        req.ik_link_name = eef_link
-        req.pose_stamped = leg1_pose_goal
-        req.timeout = rospy.Duration(10)
+        # Set parameters for IK Request
+        ik_request = PositionIKRequest()
+        ik_request.group_name = 'leg1'
+        ik_request.robot_state = self.robot.get_current_state()
+        ik_request.ik_link_name = eef_link
+        ik_request.pose_stamped = leg1_pose_goal
+        ik_request.timeout = rospy.Duration(10)
 
-        # Request IK computation from MoveIt
-        resp = moveit_compute_ik(req)
-        target_joint_state = resp.solution.joint_state.position
+        # Get IK Response from MoveIt
+        ik_response = moveit_compute_ik(ik_request)
+        target_joint_state = ik_response.solution.joint_state.position
         print(f"\nTarget Joint State:\n{target_joint_state}\n")
         
         return target_joint_state
 
         # # Plan and visualize trajectory in RViz
-        # print("COMMAND POSE")
-        # leg1_move_group.set_joint_value_target(leg1_pose_goal, eef_link, True)
+        # move_group.set_joint_value_target(eef_pose_goal, eef_link, True)
         # plan = leg1_move_group.go(wait=True)
         # leg1_move_group.stop()
