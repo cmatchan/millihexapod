@@ -23,11 +23,15 @@ class Millihexapod:
     ----------
     robot: RobotCommander
         moveit_commander robot object to get it's current state.
-    num_legs: int
         
-
     Methods
     -------
+    get_joint_index(leg_number, joint_number):
+        Returns the index of a joint in a joint state array.
+
+    start_joint_position_controller_publishers():
+        Initializes all joint publishers to the joint position
+        controller /command topic.
     """
 
     def __init__(self):
@@ -97,14 +101,15 @@ class Millihexapod:
 
     def get_joint_index(self, leg_number, joint_number):
         """
-        Given a desired joint and leg number, returns the index of a joint in
-        the joint_positions array.
+        Given a desired joint and leg number, returns the index of a joint in a
+        joint state array.
         
         Parameters
         ----------
         leg_number : int
            The leg number of the Millihex robot (1-6).
            The leg number order is top to bottom, left to right.
+
         joint_number : int
            The joint number for a given leg (1-3).
            The joint number order is in to out (body to foot).
@@ -140,7 +145,10 @@ class Millihexapod:
 
     def start_joint_position_controller_publishers(self):
         """
-        Initialize joint publishers to the topic:
+        Initializes all joint publishers to the joint position
+        controller /command topic.
+
+        Joint position controller /command topic naming scheme:
             /millihex/leg#_joint#_position_controller/command
         """
         # Leg and joint number indices start from 1
