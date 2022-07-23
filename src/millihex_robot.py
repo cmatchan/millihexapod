@@ -224,3 +224,7 @@ class Millihexapod:
         print(f"\nTarget Joint State:\n{target_joint_state}\n")
         
         return target_joint_state
+
+
+    def triangle_gait_2d:
+        pass
