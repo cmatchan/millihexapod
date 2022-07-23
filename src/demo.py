@@ -5,31 +5,18 @@ import numpy as np
 from millihex_robot import Millihexapod
 
 def main():
-    """
-    Initializes ROS node for robot.
-    """
     try:
-        # Initialize ROS node and Millihexapod
-        rospy.init_node('robot_walk', anonymous=True)
         millihex = Millihexapod()
         rate = rospy.Rate(0.5)
-        
-        millihex.down()
-        rate.sleep()
-
-        millihex.up(joint_angle = -(np.pi /2))
-        rate.sleep()
 
         millihex.down()
         rate.sleep()
-        
-        joints = np.array([0, 6, 12])
-        target_joint_position = np.pi / 4
-        millihex.set_joint_positions(joints, target_joint_position)
+
+        millihex.up()
         rate.sleep()
-        
-        millihex.down()
-        rate.sleep()
+
+        target_joint_state = millihex.compute_ik()
+        millihex.set_joint_state(target_joint_state, step_rate=100, angle_step=0.01)
 
         sys.exit(0)
 
@@ -37,4 +24,4 @@ def main():
         pass
 
 if __name__ == '__main__':
-    sys.exit(main())
+    main()

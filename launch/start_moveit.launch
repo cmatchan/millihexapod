@@ -1,0 +1,30 @@
+<launch>
+    <!-- Start MoveIt for motion planning -->
+
+    <!-- Choose controller manager: fake, simple, or ros_control -->
+    <arg name="moveit_controller_manager" default="fake" />
+
+    <!-- Set execution mode for fake execution controllers -->
+    <arg name="fake_execution_type" default="interpolate" />
+
+    <!-- By default, we are not in debug mode -->
+    <arg name="debug" default="false" />
+
+    <!-- specify the planning pipeline -->
+    <arg name="pipeline" default="ompl" />
+
+    <!-- By default, we will load or override the robot_description -->
+    <arg name="load_robot_description" default="false"/>
+
+    <!-- Run the main MoveIt executable without trajectory execution (we do not have controllers configured by default) -->
+    <include file="$(find millihex_moveit_config)/launch/move_group.launch">
+        <arg name="allow_trajectory_execution" value="true"/>
+        <arg name="moveit_controller_manager" value="$(arg moveit_controller_manager)" />
+        <arg name="fake_execution_type" value="$(arg fake_execution_type)"/>
+        <arg name="info" value="true"/>
+        <arg name="debug" value="$(arg debug)"/>
+        <arg name="pipeline" value="$(arg pipeline)"/>
+        <arg name="load_robot_description" value="$(arg load_robot_description)"/>
+    </include>
+
+</launch>

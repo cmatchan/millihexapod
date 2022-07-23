@@ -1,6 +1,7 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
 <launch>
+    <!-- Spawn Millihex in Gazebo -->
+
+    <!-- Spawn an empty world -->
     <include file="$(find gazebo_ros)/launch/empty_world.launch" />
 
     <!-- Robot spawn position -->
@@ -14,11 +15,14 @@
     <!-- Load the URDF into the ROS Parameter Server -->
     <param name="robot_description" command="$(find xacro)/xacro $(arg xacro_file_path)" />
 
-    <!-- Run a python script to the send a service call to gazebo_ros to spawn a URDF robot -->
+    <!-- Send a service call to gazebo_ros to spawn a URDF robot -->
     <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
         args="-urdf -x $(arg x) -y $(arg y) -z $(arg z)  -model $(arg robot_name) -param robot_description" />
 
-    <!-- Launch robot joint controllers -->
+    <!-- Start robot joint controllers -->
     <include file="$(find millihexapod)/launch/start_controllers.launch" />
+
+    <!-- Start MoveIt -->
+    <include file="$(find millihexapod)/launch/start_moveit.launch" />
 
 </launch>

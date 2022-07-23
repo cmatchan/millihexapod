@@ -427,6 +427,17 @@
             <child link="leg${leg_number}_link3" />
             <origin xyz="0 0 0" rpy="0 0 0" />
         </joint>
+
+        <!-- Joint Link 4 (Foot) -->
+        <xacro:millihex_joint_link leg_number="${leg_number}" link_number="4"
+            yaw="0.0" color="White" />
+        
+        <!-- Fixed Joint 4 (Foot Joint) -->
+        <joint name="leg${leg_number}_fixed_joint4" type="fixed">
+            <parent link="leg${leg_number}_link3" />
+            <child link="leg${leg_number}_joint_link4" />
+            <origin xyz="0 ${leg_link3_y + (2 * joint_link_r)} 0" rpy="0 0 0" />
+        </joint>
     </xacro:macro>
 
     <!-- Assemble Body -->
