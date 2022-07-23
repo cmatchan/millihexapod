@@ -15,21 +15,28 @@ JOINTS_PER_LEG = 3
 NUM_JOINTS = NUM_LEGS * JOINTS_PER_LEG
 
 class Millihexapod:
+    """
+    A class used to represent and control a Millihexapod robot in Gazebo
+    simulation.
+
+    Attributes
+    ----------
+    robot: RobotCommander
+        moveit_commander robot object to get it's current state.
+    num_legs: int
+        
+
+    Methods
+    -------
+    """
+
     def __init__(self):
         """
-        Initializes a Millihex object and starts ROS publishers & ROS subscribers.
-
-        Attributes
-        ----------
-        robot: RobotCommander
-            moveit_commander robot object to get it's current state.
-        num_legs: int
-            
-
-        Methods
-        -------
-
+        Initializes MoveIt for leg trajectory planning.
+        Starts ROS publishers & subscribers for getting and setting joint
+        states.
         """
+        
         print("\n==================== Initializing Millihexapod ====================")
         
         # Remap /joint_states to /millihex/joint_states topic for MoveIt
@@ -62,13 +69,6 @@ class Millihexapod:
 
         # Array of joint positions
         # Angle limits = [-pi/2, pi/2] rad
-        # Joint array order:
-        #   [leg1_joint1 leg1_joint2 leg1_joint3
-        #    leg2_joint1 leg2_joint2 leg2_joint3
-        #    leg3_joint1 leg3_joint2 leg3_joint3
-        #    leg4_joint1 leg4_joint2 leg4_joint3
-        #    leg5_joint1 leg5_joint2 leg5_joint3
-        #    leg6_joint1 leg6_joint2 leg6_joint3]
         self.joint_positions = np.zeros(NUM_JOINTS)
         
         # List of joint publishers
@@ -97,15 +97,43 @@ class Millihexapod:
 
     def get_joint_index(self, leg_number, joint_number):
         """
-        Returns the index of a joint in the joint_positions array.
+        Given a desired joint and leg number, returns the index of a joint in
+        the joint_positions array.
         
         Parameters
         ----------
+        leg_number : int
+           The leg number of the Millihex robot (1-6).
+           The leg number order is top to bottom, left to right.
+        joint_number : int
+           The joint number for a given leg (1-3).
+           The joint number order is in to out (body to foot).
+
+              Leg Order                  Joint Order
+               (Leg #)                    [Joint #]
+
+            (1) ----- (4)                 +----------+-----
+                  |                       |         [1]
+            (2) ----- (5)                 + [2] +----+
+                  |                       |     |    |
+            (3) ----- (6)           +-----+     |    |
+                  |             (1) |    [3]    |    |
+                  |                 +-----+-----+    |
 
         Returns
         -------
+        joint_index : int
+            The corresponding index for joints in a joint state array.
 
+            Joint state array order:
+                [leg1_joint1  leg1_joint2  leg1_joint3
+                 leg2_joint1  leg2_joint2  leg2_joint3
+                 leg3_joint1  leg3_joint2  leg3_joint3
+                 leg4_joint1  leg4_joint2  leg4_joint3
+                 leg5_joint1  leg5_joint2  leg5_joint3
+                 leg6_joint1  leg6_joint2  leg6_joint3]
         """
+
         joint_index = (leg_number - 1) * JOINTS_PER_LEG + (joint_number - 1)
         return joint_index
 
