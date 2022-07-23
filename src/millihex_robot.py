@@ -30,13 +30,16 @@ class Millihexapod:
         -------
 
         """
-        # Initialize moveit_commander and rospy node
         print("\n==================== Initializing Millihexapod ====================")
-
-        # Remap /joint_states to /millihex/joint_states topic for moveit
+        
+        # Remap /joint_states to /millihex/joint_states topic for MoveIt
         joint_state_topic = ['joint_states:=/millihex/joint_states']
+
+        # Initialize moveit_commander
         moveit_commander.roscpp_initialize(joint_state_topic)
         self.robot = moveit_commander.RobotCommander()
+
+        # Initialize rospy node
         rospy.init_node('millihex_robot', anonymous=True)
 
         # Set sleep rate to pause between messages
@@ -47,6 +50,14 @@ class Millihexapod:
         self.num_legs = NUM_LEGS
         self.joints_per_leg = JOINTS_PER_LEG
         self.num_joints = NUM_JOINTS
+
+        # List all leg groups of Millihex
+        self.group_names = self.robot.get_group_names()
+        print(f"Planning Groups: {self.group_names}\n")
+
+        # Initialize MoveGroupCommander for all leg groups
+        print("Initializing MoveGroupCommander...")
+        self.leg1_move_group = moveit_commander.MoveGroupCommander("leg1")
 
         # Array of joint positions
         # Angle limits = [-pi/2, pi/2] rad
@@ -181,24 +192,14 @@ class Millihexapod:
         """
         Commands robot to lay down flat.
         """
-        print("COMPUTE IK")
+        print("COMPUTE IK\n")
 
-        # List all the leg groups of Millihex:
-        group_names = self.robot.get_group_names()
-        print(f"Planning Groups: {group_names}\n")
-
-        # Define move_group 'leg1'
-        print("Initializing leg1 move_group...")
-        leg1_move_group = moveit_commander.MoveGroupCommander("leg1")
-
-        # Get move_group properties
-        leg1_joints = leg1_move_group.get_joints()
-        leg1_current_pose = leg1_move_group.get_current_pose()
-        eef_link = leg1_move_group.get_end_effector_link()
+        eef_link = self.leg1_move_group.get_end_effector_link()
+        print(f"End-Effector: {eef_link}\n")
 
         # Get a random pose goal
-        leg1_pose_goal = leg1_move_group.get_random_pose(eef_link)
-        print(f"\nTarget Pose:\n{leg1_pose_goal}\n")
+        leg1_pose_goal = self.leg1_move_group.get_random_pose(eef_link)
+        print(f"Target Pose:\n{leg1_pose_goal}\n")
 
         # Connect to /compute_ik service
         rospy.wait_for_service('compute_ik')
@@ -221,8 +222,3 @@ class Millihexapod:
         print(f"\nTarget Joint State:\n{target_joint_state}\n")
         
         return target_joint_state
-
-        # # Plan and visualize trajectory in RViz
-        # move_group.set_joint_value_target(eef_pose_goal, eef_link, True)
-        # plan = leg1_move_group.go(wait=True)
-        # leg1_move_group.stop()
