@@ -41,8 +41,6 @@ class Millihexapod:
 
         # Initialize rospy node
         rospy.init_node('millihex_robot', anonymous=True)
-
-        # Set sleep rate to pause between messages
         pause = rospy.Rate(2)
         pause.sleep()
 
@@ -51,19 +49,16 @@ class Millihexapod:
         self.joints_per_leg = JOINTS_PER_LEG
         self.num_joints = NUM_JOINTS
 
-        # List of all groups including end-effectors
+        # List of leg group names
         self.group_names = self.robot.get_group_names()
-        print(f"All Planning Groups: {self.group_names}\n")
+
+        # List of all leg groups
+        self.move_groups = [None] * len(self.group_names)
 
         # Initialize MoveGroupCommander for all leg groups
         print("Initializing MoveGroupCommander...")
-        leg_groups = self.group_names[::2]
-
-        # List of all leg groups
-        self.move_groups = [None] * len(leg_groups)
-
-        for i in range(len(leg_groups)):
-            self.move_groups[i] = moveit_commander.MoveGroupCommander(leg_groups[i])
+        for i in range(len(self.group_names)):
+            self.move_groups[i] = moveit_commander.MoveGroupCommander(self.group_names[i])
 
         # Array of joint positions
         # Angle limits = [-pi/2, pi/2] rad
@@ -200,7 +195,7 @@ class Millihexapod:
         """
         print("COMPUTE IK\n")
 
-        leg_move_group = self.move_groups[1]
+        leg_move_group = self.move_groups[2]
         eef_link = leg_move_group.get_end_effector_link()
         print(f"End-Effector: {eef_link}\n")
 
