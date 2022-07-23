@@ -51,13 +51,19 @@ class Millihexapod:
         self.joints_per_leg = JOINTS_PER_LEG
         self.num_joints = NUM_JOINTS
 
-        # List all leg groups of Millihex
+        # List of all groups including end-effectors
         self.group_names = self.robot.get_group_names()
-        print(f"Planning Groups: {self.group_names}\n")
+        print(f"All Planning Groups: {self.group_names}\n")
 
         # Initialize MoveGroupCommander for all leg groups
         print("Initializing MoveGroupCommander...")
-        self.leg1_move_group = moveit_commander.MoveGroupCommander("leg1")
+        leg_groups = self.group_names[::2]
+
+        # List of all leg groups
+        self.move_groups = [None] * len(leg_groups)
+
+        for i in range(len(leg_groups)):
+            self.move_groups[i] = moveit_commander.MoveGroupCommander(leg_groups[i])
 
         # Array of joint positions
         # Angle limits = [-pi/2, pi/2] rad
@@ -194,12 +200,13 @@ class Millihexapod:
         """
         print("COMPUTE IK\n")
 
-        eef_link = self.leg1_move_group.get_end_effector_link()
+        leg_move_group = self.move_groups[1]
+        eef_link = leg_move_group.get_end_effector_link()
         print(f"End-Effector: {eef_link}\n")
 
         # Get a random pose goal
-        leg1_pose_goal = self.leg1_move_group.get_random_pose(eef_link)
-        print(f"Target Pose:\n{leg1_pose_goal}\n")
+        leg_pose_goal = leg_move_group.get_random_pose(eef_link)
+        print(f"Target Pose:\n{leg_pose_goal}\n")
 
         # Connect to /compute_ik service
         rospy.wait_for_service('compute_ik')
@@ -210,10 +217,10 @@ class Millihexapod:
         
         # Set parameters for IK Request
         ik_request = PositionIKRequest()
-        ik_request.group_name = 'leg1'
+        ik_request.group_name = leg_move_group.get_name()
         ik_request.robot_state = self.robot.get_current_state()
         ik_request.ik_link_name = eef_link
-        ik_request.pose_stamped = leg1_pose_goal
+        ik_request.pose_stamped = leg_pose_goal
         ik_request.timeout = rospy.Duration(10)
 
         # Get IK Response from MoveIt
