@@ -56,7 +56,7 @@ class Millihexapod:
         self.move_groups = [None] * len(self.group_names)
 
         # Initialize MoveGroupCommander for all leg groups
-        print("Initializing MoveGroupCommander...")
+        print("\nInitializing MoveGroupCommander...")
         for i in range(len(self.group_names)):
             self.move_groups[i] = moveit_commander.MoveGroupCommander(self.group_names[i])
 
@@ -195,7 +195,7 @@ class Millihexapod:
         """
         print("COMPUTE IK\n")
 
-        leg_move_group = self.move_groups[2]
+        leg_move_group = self.move_groups[5]
         eef_link = leg_move_group.get_end_effector_link()
         print(f"End-Effector: {eef_link}\n")
 
