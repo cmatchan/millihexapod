@@ -23,7 +23,29 @@ class Millihexapod:
     ----------
     robot: RobotCommander
         moveit_commander robot object to get it's current state.
-        
+    num_legs:
+
+    joints_per_leg:
+
+    num_joints:
+
+    group_names:
+
+    move_groups:
+
+    joint_positions:
+        Joint state array order:
+            [leg1_joint1  leg1_joint2  leg1_joint3
+             leg2_joint1  leg2_joint2  leg2_joint3
+             leg3_joint1  leg3_joint2  leg3_joint3
+             leg4_joint1  leg4_joint2  leg4_joint3
+             leg5_joint1  leg5_joint2  leg5_joint3
+             leg6_joint1  leg6_joint2  leg6_joint3]
+    
+    publishers:
+
+    subscriber:
+
     Methods
     -------
     get_joint_index(leg_number, joint_number):
@@ -107,12 +129,12 @@ class Millihexapod:
         Parameters
         ----------
         leg_number : int
-           The leg number of the Millihex robot (1-6).
-           The leg number order is top to bottom, left to right.
+            The leg number of the Millihex robot (1-6).
+            The leg number order is top to bottom, left to right.
 
         joint_number : int
-           The joint number for a given leg (1-3).
-           The joint number order is in to out (body to foot).
+            The joint number for a given leg (1-3).
+            The joint number order is in to out (body to foot).
 
               Leg Order                  Joint Order
                (Leg #)                    [Joint #]
@@ -129,14 +151,8 @@ class Millihexapod:
         -------
         joint_index : int
             The corresponding index for joints in a joint state array.
-
-            Joint state array order:
-                [leg1_joint1  leg1_joint2  leg1_joint3
-                 leg2_joint1  leg2_joint2  leg2_joint3
-                 leg3_joint1  leg3_joint2  leg3_joint3
-                 leg4_joint1  leg4_joint2  leg4_joint3
-                 leg5_joint1  leg5_joint2  leg5_joint3
-                 leg6_joint1  leg6_joint2  leg6_joint3]
+            The joint state array order follows the convention specified by the
+            'joint_positions' attribute.
         """
 
         joint_index = (leg_number - 1) * JOINTS_PER_LEG + (joint_number - 1)
@@ -145,10 +161,11 @@ class Millihexapod:
 
     def start_joint_position_controller_publishers(self):
         """
-        Initializes all joint publishers to the joint position
-        controller /command topic.
+        Initializes all joint publishers to the joint position controller
+        /command topic. Stores initialzied publishers in the 'publishers' array
+        attribute.
 
-        Joint position controller /command topic naming scheme:
+        Joint position controller /command topic name convention:
             /millihex/leg#_joint#_position_controller/command
         """
         # Leg and joint number indices start from 1
@@ -174,7 +191,9 @@ class Millihexapod:
 
     def joint_states_subscriber_callback(self, ros_data):
         """
-        Subscriber callback function of /millihex/joint_states topic.
+        Subscriber callback function for the /millihex/joint_states topic.
+        Updates the 'joint_positions' array attribute which stores the current
+        robot joint state.
         """
         # Convert /joint_states joint position tuple to array
         self.joint_positions = np.asarray(ros_data.position)
@@ -182,7 +201,23 @@ class Millihexapod:
 
     def set_joint_state(self, target_joint_state=[], step_rate=100, angle_step=0.01):
         """
-        Publishes desired joint state to robot.
+        Publishes the target_joint_state array of joint values to the Millihex
+        joint position controllers /command topic.
+
+        Parameters
+        ----------
+        target_joint_state : float[]
+            Array of desired, target joint positions to command joint position
+            controllers. The joint order follows the convention specified by the
+            'joint_positions' attribute.
+
+        setp_rate: float
+            Sets the rate for publishing each incremental angle towards the target
+            joint position.
+
+        angle_step: float
+            Sets the incremental angle step between each publish command sent to
+            the joint position controllers.
         """
         # Set rotation rate
         rate = rospy.Rate(step_rate)
