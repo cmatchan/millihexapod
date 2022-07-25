@@ -22,18 +22,32 @@ class Millihexapod:
     Attributes
     ----------
     robot: RobotCommander
-        moveit_commander robot object to get it's current state.
-    num_legs:
+        moveit_commander robot object to get the Millihex robot's current state.
 
-    joints_per_leg:
+    num_legs: int
+        The number of legs in a Millihex robot. (default 6)
 
-    num_joints:
+    joints_per_leg: int
+        The number of joints in each Millihex leg. (default 3)
 
-    group_names:
+    num_joints: int
+        The total number of joints in a Millihex robot.
+        (num_legs * joints_per_leg = 18)
 
-    move_groups:
+    group_names: str[]
+        An array of the names of all the leg move groups used by MoveIt to compute
+        the Inverse Kinematics. Each leg group contains link and joint relations.
 
-    joint_positions:
+        Leg group names:
+            ['leg1' 'leg2' 'leg3' 'leg4' 'leg5' 'leg6' ]
+
+    move_groups: MoveGroupCommander
+        moveit_commander move_group object to get and set leg move group states
+        and properties.
+
+    joint_positions: float[]
+        Stores the current state of all joints in a Millihex robot.
+
         Joint state array order:
             [leg1_joint1  leg1_joint2  leg1_joint3
              leg2_joint1  leg2_joint2  leg2_joint3
@@ -42,9 +56,13 @@ class Millihexapod:
              leg5_joint1  leg5_joint2  leg5_joint3
              leg6_joint1  leg6_joint2  leg6_joint3]
     
-    publishers:
+    publishers: Publisher[]
+        An array of ROS Publisher objects that publish to the /command topic of the
+        Millihex robot's joint position controllers.
 
     subscriber:
+        A ROS Subscriber object that subscribes to the Millihex robot /joint_states
+        topic and continuously updates the robot's current joint positions.
 
     Methods
     -------
@@ -76,8 +94,8 @@ class Millihexapod:
     def __init__(self):
         """
         Initializes MoveIt for leg trajectory planning.
-        Starts ROS publishers & subscribers for getting and setting joint
-        states.
+        Starts ROS Publishers and Subscribers for getting and setting joint
+        states and properties.
         """
         
         print("\n==================== Initializing Millihexapod ====================")
