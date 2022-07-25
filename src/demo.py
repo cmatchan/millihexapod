@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import sys
 import rospy
-import numpy as np
 from millihex_robot import Millihexapod
 
 def main():
@@ -15,8 +14,8 @@ def main():
         millihex.up()
         rate.sleep()
 
-        target_joint_state = millihex.compute_ik()
-        millihex.set_joint_state(target_joint_state, step_rate=100, angle_step=0.01)
+        millihex.triangle_gait_2d()
+        rate.sleep()
 
         sys.exit(0)
 

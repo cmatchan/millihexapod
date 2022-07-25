@@ -5,7 +5,6 @@ import numpy as np
 import moveit_commander
 from std_msgs.msg import Float64
 from sensor_msgs.msg import JointState
-from geometry_msgs.msg import Pose
 from moveit_msgs.msg import PositionIKRequest
 from moveit_msgs.srv import GetPositionIK
 
@@ -121,11 +120,11 @@ class Millihexapod:
         self.group_names = self.robot.get_group_names()
 
         # List of all leg groups
-        self.move_groups = [None] * len(self.group_names)
+        self.move_groups = [None] * NUM_LEGS
 
         # Initialize MoveGroupCommander for all leg groups
         print("\nInitializing MoveGroupCommander...")
-        for i in range(len(self.group_names)):
+        for i in range(NUM_LEGS):
             self.move_groups[i] = moveit_commander.MoveGroupCommander(self.group_names[i])
 
         # Array of joint positions
@@ -171,16 +170,16 @@ class Millihexapod:
             The joint number for a given leg (1-3).
             The joint number order is in to out (body to foot).
 
-              Leg Order                  Joint Order
-               (Leg #)                    [Joint #]
+              Leg Order                    Joint Order
+               (Leg #)                      [Joint #]
 
-            (1) ----- (4)                 +----------+-----
-                  |                       |         [1]
-            (2) ----- (5)                 + [2] +----+
-                  |                       |     |    |
-            (3) ----- (6)           +-----+     |    |
-                  |             (1) |    [3]    |    |
-                  |                 +-----+-----+    |
+            (1) ----- (4)                 +----------+----+
+                  |                       |         [1]   |
+            (2) ----- (5)                 + [2] +----+----+
+                  |                       |     |         |
+            (3) ----- (6)           +-----+     |         |
+                  |             (1) |    [3]    |         |
+                  |                 +-----+-----+         |
 
         Returns
         -------
@@ -323,14 +322,19 @@ class Millihexapod:
         self.set_joint_state(target_joint_state, step_rate=100, angle_step=0.01)
         
 
-    def compute_ik(self):
+    def compute_ik(self, target_leg_pose_state=[]):
         """
-        Computes Inverse Kinematics for a desired Millihex robot joint state.
+        Computes Inverse Kinematics for a desired Millihex robot leg pose state.
+
+        Parameters
+        ----------
+        target_leg_pose_state = PoseStamped[]
+            An array of desired poses for all Millihex legs.
         """
 
         print("COMPUTE IK\n")
 
-        leg_move_group = self.move_groups[5]
+        leg_move_group = self.move_groups[3]
         eef_link = leg_move_group.get_end_effector_link()
         print(f"End-Effector: {eef_link}\n")
 
@@ -362,4 +366,12 @@ class Millihexapod:
 
 
     def triangle_gait_2d(self):
-        pass
+        leg4 = self.move_groups[3]
+        leg4_eef = leg4.get_end_effector_link()
+        leg4_current_pose = leg4.get_current_pose()
+        leg4_pose_goal = leg4.get_random_pose(leg4_eef)
+
+        print(f"LEG4 POSE GOAL:\n{leg4_pose_goal}\n")
+
+        target_joint_state = self.compute_ik()
+        self.set_joint_state(target_joint_state, step_rate=100, angle_step=0.01)
