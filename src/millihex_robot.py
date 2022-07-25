@@ -48,12 +48,29 @@ class Millihexapod:
 
     Methods
     -------
-    get_joint_index(leg_number, joint_number):
-        Returns the index of a joint in a joint state array.
+    get_joint_index(leg_number, joint_number)
+        Given a desired joint and leg number, returns the index of a joint in a
+        joint state array.
 
-    start_joint_position_controller_publishers():
-        Initializes all joint publishers to the joint position
-        controller /command topic.
+    start_joint_position_controller_publishers()
+        Initializes all joint publishers to the joint position controller
+        /command topic.
+
+    joint_states_subscriber_callback(ros_data)
+        Subscriber callback function for the /millihex/joint_states topic.
+
+    set_joint_state(target_joint_state=[], step_rate=100, angle_step=0.01)
+        Publishes the target_joint_state array of joint values to the Millihex
+        joint position controllers /command topic.
+
+    up(joint_angle=(np.pi/6), step_rate=100, angle_step=0.01)
+        Commands the Millihex robot to stand up with all legs.
+
+    down(step_rate=100, angle_step=0.01)
+        Commands the Millihex robot to lay down flat.
+
+    compute_ik()
+        Computes Inverse Kinematics for a desired Millihex robot joint state.
     """
 
     def __init__(self):
@@ -168,6 +185,7 @@ class Millihexapod:
         Joint position controller /command topic name convention:
             /millihex/leg#_joint#_position_controller/command
         """
+
         # Leg and joint number indices start from 1
         for leg_number in range(1, NUM_LEGS + 1):
             for joint_number in range(1, JOINTS_PER_LEG + 1):
@@ -193,8 +211,9 @@ class Millihexapod:
         """
         Subscriber callback function for the /millihex/joint_states topic.
         Updates the 'joint_positions' array attribute which stores the current
-        robot joint state.
+        Millihex robot joint state.
         """
+
         # Convert /joint_states joint position tuple to array
         self.joint_positions = np.asarray(ros_data.position)
 
@@ -211,7 +230,7 @@ class Millihexapod:
             controllers. The joint order follows the convention specified by the
             'joint_positions' attribute.
 
-        setp_rate: float
+        setp_rate: int
             Sets the rate for publishing each incremental angle towards the target
             joint position.
 
@@ -219,6 +238,7 @@ class Millihexapod:
             Sets the incremental angle step between each publish command sent to
             the joint position controllers.
         """
+
         # Set rotation rate
         rate = rospy.Rate(step_rate)
 
@@ -240,12 +260,26 @@ class Millihexapod:
             rate.sleep()
 
 
-    def up(self, step_rate=100, angle_step=0.01):
+    def up(self, joint_angle=(np.pi/6), step_rate=100, angle_step=0.01):
         """
-        Commands robot to stand up with all legs in low stance position.
+        Commands the Millihex robot to stand up with all legs.
+
+        Parameters
+        ----------
+        joint_angle: float
+            Desired joint angle to publish to all joints.
+
+        setp_rate: int
+            Sets the rate for publishing each incremental angle towards the target
+            joint position.
+
+        angle_step: float
+            Sets the incremental angle step between each publish command sent to
+            the joint position controllers.
         """
+
         print("MILLIHEX UP\n")
-        target_joint_state = np.zeros(NUM_JOINTS) + (np.pi / 6)
+        target_joint_state = np.zeros(NUM_JOINTS) + joint_angle
         middle_joint = int(NUM_JOINTS / 2)
         target_joint_state[0:middle_joint] *= -1
         self.set_joint_state(target_joint_state, step_rate=100, angle_step=0.01)
@@ -253,8 +287,19 @@ class Millihexapod:
 
     def down(self, step_rate=100, angle_step=0.01):
         """
-        Commands robot to lay down flat.
+        Commands the Millihex robot to lay down flat.
+
+        Parameters
+        ----------
+        setp_rate: int
+            Sets the rate for publishing each incremental angle towards the target
+            joint position.
+
+        angle_step: float
+            Sets the incremental angle step between each publish command sent to
+            the joint position controllers.
         """
+
         print("MILLIHEX DOWN\n")
         target_joint_state = np.zeros(NUM_JOINTS)
         self.set_joint_state(target_joint_state, step_rate=100, angle_step=0.01)
@@ -262,8 +307,9 @@ class Millihexapod:
 
     def compute_ik(self):
         """
-        Commands robot to lay down flat.
+        Computes Inverse Kinematics for a desired Millihex robot joint state.
         """
+
         print("COMPUTE IK\n")
 
         leg_move_group = self.move_groups[5]
@@ -297,5 +343,5 @@ class Millihexapod:
         return target_joint_state
 
 
-    def triangle_gait_2d:
+    def triangle_gait_2d(self):
         pass
