@@ -386,3 +386,17 @@ class Millihexapod:
 
             target_joint_state = self.compute_ik(target_leg_poses, eef_link_names)
             self.set_joint_state(target_joint_state, step_rate=100, angle_step=0.01)
+
+
+    def triangle_gait_2d(self):
+        target_leg_poses = [None] * NUM_LEGS
+        eef_link_names = [None] * NUM_LEGS
+
+        for i in range(NUM_LEGS):
+            leg_group = self.move_groups[i + 1]
+            eef_link = leg_group.get_end_effector_link()
+            eef_link_names[i] = eef_link
+            target_leg_poses[i] = leg_group.get_random_pose(eef_link)
+
+        target_joint_state = self.compute_ik(target_leg_poses, eef_link_names)
+        self.set_joint_state(target_joint_state, step_rate=100, angle_step=0.01)
