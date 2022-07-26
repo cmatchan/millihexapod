@@ -6,6 +6,7 @@ import moveit_commander
 from std_msgs.msg import Float64
 from sensor_msgs.msg import JointState
 from moveit_msgs.msg import PositionIKRequest
+from geometry_msgs.msg import PoseStamped
 from moveit_msgs.srv import GetPositionIK
 
 # Millihex constants
@@ -120,11 +121,11 @@ class Millihexapod:
         self.group_names = self.robot.get_group_names()
 
         # List of all leg groups
-        self.move_groups = [None] * NUM_LEGS
+        self.move_groups = [None] * len(self.group_names)
 
         # Initialize MoveGroupCommander for all leg groups
         print("\nInitializing MoveGroupCommander...")
-        for i in range(NUM_LEGS):
+        for i in range(len(self.group_names)):
             self.move_groups[i] = moveit_commander.MoveGroupCommander(self.group_names[i])
 
         # Array of joint positions
@@ -322,25 +323,17 @@ class Millihexapod:
         self.set_joint_state(target_joint_state, step_rate=100, angle_step=0.01)
         
 
-    def compute_ik(self, target_leg_pose_state=[]):
+    def compute_ik(self, target_leg_poses=[], eef_link_names=[]):
         """
         Computes Inverse Kinematics for a desired Millihex robot leg pose state.
 
         Parameters
         ----------
-        target_leg_pose_state = PoseStamped[]
+        target_leg_poses = PoseStamped[]
             An array of desired poses for all Millihex legs.
         """
 
         print("COMPUTE IK\n")
-
-        leg_move_group = self.move_groups[3]
-        eef_link = leg_move_group.get_end_effector_link()
-        print(f"End-Effector: {eef_link}\n")
-
-        # Get a random pose goal
-        leg_pose_goal = leg_move_group.get_random_pose(eef_link)
-        print(f"Target Pose:\n{leg_pose_goal}\n")
 
         # Connect to /compute_ik service
         rospy.wait_for_service('compute_ik')
@@ -351,27 +344,32 @@ class Millihexapod:
         
         # Set parameters for IK Request
         ik_request = PositionIKRequest()
-        ik_request.group_name = leg_move_group.get_name()
+        ik_request.group_name = self.move_groups[0].get_name()
         ik_request.robot_state = self.robot.get_current_state()
-        ik_request.ik_link_name = eef_link
-        ik_request.pose_stamped = leg_pose_goal
+        ik_request.ik_link_names = eef_link_names
+        ik_request.pose_stamped_vector = target_leg_poses
         ik_request.timeout = rospy.Duration(10)
 
         # Get IK Response from MoveIt
         ik_response = moveit_compute_ik(ik_request)
         target_joint_state = ik_response.solution.joint_state.position
         print(f"\nTarget Joint State:\n{target_joint_state}\n")
-        
+            
         return target_joint_state
 
 
     def triangle_gait_2d(self):
-        leg4 = self.move_groups[3]
-        leg4_eef = leg4.get_end_effector_link()
-        leg4_current_pose = leg4.get_current_pose()
-        leg4_pose_goal = leg4.get_random_pose(leg4_eef)
+        
+        target_leg_poses = [None] * NUM_LEGS
+        eef_link_names = [None] * NUM_LEGS
 
-        print(f"LEG4 POSE GOAL:\n{leg4_pose_goal}\n")
+        for i in range(NUM_LEGS):
+            leg_group = self.move_groups[i + 1]
+            eef_link = leg_group.get_end_effector_link()
+            eef_link_names[i] = eef_link
+            target_leg_poses[i] = leg_group.get_random_pose(eef_link)
 
-        target_joint_state = self.compute_ik()
+        print(f"eef_link_names: {eef_link_names}\n")
+
+        target_joint_state = self.compute_ik(target_leg_poses, eef_link_names)
         self.set_joint_state(target_joint_state, step_rate=100, angle_step=0.01)
