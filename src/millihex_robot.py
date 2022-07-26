@@ -389,6 +389,28 @@ class Millihexapod:
 
 
     def triangle_gait_2d(self):
+        """
+        Returns x and y positions of a 2D triangular gait for a Millihex robot's foot.
+        
+        Parameters
+        ----------
+        h: float
+            Height of triangle gait (cm).
+        w: float
+            Width of triangle gait (cm).
+        T: float
+            Period of gait (sec).
+        t: float
+            Time vector (sec).
+        
+        Returns
+        -------
+        x: float
+            x position (cm) of robot foot at time t secs.
+        y: float
+           y position (cm) of robot foot at time t secs.
+        """
+
         target_leg_poses = [None] * NUM_LEGS
         eef_link_names = [None] * NUM_LEGS
 
@@ -400,3 +422,25 @@ class Millihexapod:
 
         target_joint_state = self.compute_ik(target_leg_poses, eef_link_names)
         self.set_joint_state(target_joint_state, step_rate=100, angle_step=0.01)
+
+
+    def triangle_gait_2d(h, w, T, t):
+        # Time that foot is planted
+        T_plant = T / 3
+        T_offset = T_plant / 2
+        
+        t_lift = np.where(((t % T) >= T_offset) & ((t % T) <= (T - T_offset)))
+
+        # y position
+        omega_y = 3 * np.pi / T
+        a_y = -(h / 2)
+        y_offset = h / 2
+        y = np.zeros(len(t)) + a_y + y_offset
+        y[t_lift] = a_y * np.cos(omega_y * ((t[t_lift] % T) - T_offset)) + y_offset
+            
+        # x position
+        omega_x = 2 * np.pi / T
+        a_x = -(w / 2)
+        x = a_x * np.sin(omega_x * t)
+        
+        return x,y
