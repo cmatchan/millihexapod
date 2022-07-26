@@ -108,7 +108,7 @@ class Millihexapod:
         self.robot = moveit_commander.RobotCommander()
 
         # Initialize rospy node
-        rospy.init_node('millihex_robot', anonymous=True)
+        rospy.init_node('robot_rock', anonymous=True)
         pause = rospy.Rate(2)
         pause.sleep()
 
@@ -333,8 +333,6 @@ class Millihexapod:
             An array of desired poses for all Millihex legs.
         """
 
-        print("COMPUTE IK\n")
-
         # Connect to /compute_ik service
         rospy.wait_for_service('compute_ik')
         try:
@@ -353,23 +351,38 @@ class Millihexapod:
         # Get IK Response from MoveIt
         ik_response = moveit_compute_ik(ik_request)
         target_joint_state = ik_response.solution.joint_state.position
-        print(f"\nTarget Joint State:\n{target_joint_state}\n")
+        print(f"Target Joint State:\n{target_joint_state}\n")
             
         return target_joint_state
 
 
-    def triangle_gait_2d(self):
-        
-        target_leg_poses = [None] * NUM_LEGS
-        eef_link_names = [None] * NUM_LEGS
+    def random_dancing(self):
+        """
+        And now......Random Dancing!
+        """
 
-        for i in range(NUM_LEGS):
-            leg_group = self.move_groups[i + 1]
-            eef_link = leg_group.get_end_effector_link()
-            eef_link_names[i] = eef_link
-            target_leg_poses[i] = leg_group.get_random_pose(eef_link)
+        print(f"And now", end="")
+        pause = rospy.Rate(5)
+        pause.sleep()
 
-        print(f"eef_link_names: {eef_link_names}\n")
+        for i in range(6):
+            sys.stdout.write(".")
+            sys.stdout.flush()
+            pause.sleep()
 
-        target_joint_state = self.compute_ik(target_leg_poses, eef_link_names)
-        self.set_joint_state(target_joint_state, step_rate=100, angle_step=0.01)
+        print(f"Random Dancing!\n")
+        pause = rospy.Rate(2)
+        pause.sleep()
+
+        while True:
+            target_leg_poses = [None] * NUM_LEGS
+            eef_link_names = [None] * NUM_LEGS
+
+            for i in range(NUM_LEGS):
+                leg_group = self.move_groups[i + 1]
+                eef_link = leg_group.get_end_effector_link()
+                eef_link_names[i] = eef_link
+                target_leg_poses[i] = leg_group.get_random_pose(eef_link)
+
+            target_joint_state = self.compute_ik(target_leg_poses, eef_link_names)
+            self.set_joint_state(target_joint_state, step_rate=100, angle_step=0.01)
