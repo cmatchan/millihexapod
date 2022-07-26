@@ -382,29 +382,6 @@ class Millihexapod:
             self.set_joint_state(target_joint_values, step_rate=100, angle_step=0.01)
 
 
-    def get_joint_state(self):
-        
-        # Initialize array to compute new joint values
-        target_joint_values = np.zeros(NUM_JOINTS)
-
-        for i in range(NUM_LEGS):
-            leg_group = self.move_groups[i + 1]
-            eef_link = leg_group.get_end_effector_link()
-
-            # Compute IK to get current joint values 
-            leg_pose = leg_group.get_current_pose(eef_link)
-            leg_group.set_joint_value_target(arg1=leg_pose, arg2=eef_link, arg3=True)
-
-            if i == 3:
-                leg_pose.pose.position.z += 1
-                leg_group.set_joint_value_target(arg1=leg_pose, arg2=eef_link, arg3=True)
-            
-            target_joint_values[(3*i):(3*i+3)] = leg_group.get_joint_value_target()
-
-        # Set joints to new joint state
-        self.set_joint_state(target_joint_values, step_rate=100, angle_step=0.01)
-
-
     def triangle_gait_2d(self):
         """
         Returns x and y positions of a 2D triangular gait for a Millihex robot's foot.
@@ -455,4 +432,20 @@ class Millihexapod:
         a_x = -(w / 2)
         x = a_x * np.sin(omega_x * t)
         
-        return x,y
+        # Compute IK for desired gait trajectory
+        for i in range(NUM_LEGS):
+            leg_group = self.move_groups[i + 1]
+            eef_link = leg_group.get_end_effector_link()
+
+            # Set pose for all legs 
+            leg_pose = leg_group.get_current_pose(eef_link)
+            leg_group.set_joint_value_target(arg1=leg_pose, arg2=eef_link, arg3=True)
+
+            if i == 3:
+                leg_pose.pose.position.z += 1
+                leg_group.set_joint_value_target(arg1=leg_pose, arg2=eef_link, arg3=True)
+            
+            target_joint_values[(3*i):(3*i+3)] = leg_group.get_joint_value_target()
+
+        # Set joints to new joint state
+        self.set_joint_state(target_joint_values, step_rate=100, angle_step=0.01)
