@@ -346,11 +346,12 @@ class Millihexapod:
         ik_request.robot_state = self.robot.get_current_state()
         ik_request.ik_link_names = eef_link_names
         ik_request.pose_stamped_vector = target_leg_poses
-        ik_request.timeout = rospy.Duration(10)
+        ik_request.timeout = rospy.Duration(3)
 
         # Get IK Response from MoveIt
         ik_response = moveit_compute_ik(ik_request)
         target_joint_state = ik_response.solution.joint_state.position
+        print(f"ERROR {ik_response.error_code}")
         print(f"Target Joint State:\n{target_joint_state}\n")
             
         return target_joint_state
@@ -388,6 +389,29 @@ class Millihexapod:
             self.set_joint_state(target_joint_state, step_rate=100, angle_step=0.01)
 
 
+    def get_joint_state(self):
+        
+        # Initialize array to compute new joint values
+        target_joint_values = np.zeros(NUM_JOINTS)
+
+        for i in range(NUM_LEGS):
+            leg_group = self.move_groups[i + 1]
+            eef_link = leg_group.get_end_effector_link()
+
+            # Compute IK to get current joint values 
+            leg_pose = leg_group.get_current_pose(eef_link)
+            leg_group.set_joint_value_target(arg1=leg_pose, arg2=eef_link, arg3=True)
+
+            if i == 3:
+                leg_pose.pose.position.z += 1
+                leg_group.set_joint_value_target(arg1=leg_pose, arg2=eef_link, arg3=True)
+            
+            target_joint_values[(3*i):(3*i+3)] = leg_group.get_joint_value_target()
+
+        # Set joints to new joint state
+        self.set_joint_state(target_joint_values, step_rate=100, angle_step=0.01)
+
+
     def triangle_gait_2d(self):
         """
         Returns x and y positions of a 2D triangular gait for a Millihex robot's foot.
@@ -411,20 +435,15 @@ class Millihexapod:
            y position (cm) of robot foot at time t secs.
         """
 
-        target_leg_poses = [None] * NUM_LEGS
-        eef_link_names = [None] * NUM_LEGS
+        # Set gait parameters
+        h = 1.0    # height (cm)
+        w = 1.0    # width (cm)
+        T = 4.0    # period (sec)
+        t = np.arange(0.0, 5 * T, 0.01)
 
-        for i in range(NUM_LEGS):
-            leg_group = self.move_groups[i + 1]
-            eef_link = leg_group.get_end_effector_link()
-            eef_link_names[i] = eef_link
-            target_leg_poses[i] = leg_group.get_random_pose(eef_link)
+        # Get x and y position vs. time
+        x, y = self.triangle_gait_2d()
 
-        target_joint_state = self.compute_ik(target_leg_poses, eef_link_names)
-        self.set_joint_state(target_joint_state, step_rate=100, angle_step=0.01)
-
-
-    def triangle_gait_2d(h, w, T, t):
         # Time that foot is planted
         T_plant = T / 3
         T_offset = T_plant / 2

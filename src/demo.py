@@ -14,7 +14,9 @@ def main():
         millihex.up()
         rate.sleep()
 
-        millihex.random_dancing()
+        # millihex.random_dancing()
+
+        millihex.get_joint_state()
 
     except rospy.ROSInterruptException:
         pass
