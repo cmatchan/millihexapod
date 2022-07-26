@@ -323,38 +323,33 @@ class Millihexapod:
         self.set_joint_state(target_joint_state, step_rate=100, angle_step=0.01)
         
 
-    def compute_ik(self, target_leg_poses=[], eef_link_names=[]):
+    def compute_ik(self, target_leg_poses=[]):
         """
         Computes Inverse Kinematics for a desired Millihex robot leg pose state.
 
         Parameters
         ----------
-        target_leg_poses = PoseStamped[]
+        target_leg_poses: PoseStamped[]
             An array of desired poses for all Millihex legs.
+
+        Returns
+        -------
+        target_joint_values: float[]
+            Array of joint values that achieve desired poses.
         """
 
-        # Connect to /compute_ik service
-        rospy.wait_for_service('compute_ik')
-        try:
-            moveit_compute_ik = rospy.ServiceProxy('compute_ik', GetPositionIK)
-        except rospy.ServiceException as e:
-            print(f"Service call failed: {e}")
-        
-        # Set parameters for IK Request
-        ik_request = PositionIKRequest()
-        ik_request.group_name = self.move_groups[0].get_name()
-        ik_request.robot_state = self.robot.get_current_state()
-        ik_request.ik_link_names = eef_link_names
-        ik_request.pose_stamped_vector = target_leg_poses
-        ik_request.timeout = rospy.Duration(3)
+        # Initialize array to compute new joint values
+        target_joint_values = np.zeros(NUM_JOINTS)
 
-        # Get IK Response from MoveIt
-        ik_response = moveit_compute_ik(ik_request)
-        target_joint_state = ik_response.solution.joint_state.position
-        print(f"ERROR {ik_response.error_code}")
-        print(f"Target Joint State:\n{target_joint_state}\n")
+        for i in range(NUM_LEGS):
+            leg_group = self.move_groups[i + 1]
+            eef_link = leg_group.get_end_effector_link()
+
+            # Compute IK for target leg pose
+            leg_group.set_joint_value_target(arg1=target_leg_poses[i], arg2=eef_link, arg3=True)
+            target_joint_values[(3*i):(3*i+3)] = leg_group.get_joint_value_target()
             
-        return target_joint_state
+        return target_joint_values
 
 
     def random_dancing(self):
@@ -377,16 +372,14 @@ class Millihexapod:
 
         while True:
             target_leg_poses = [None] * NUM_LEGS
-            eef_link_names = [None] * NUM_LEGS
 
             for i in range(NUM_LEGS):
                 leg_group = self.move_groups[i + 1]
                 eef_link = leg_group.get_end_effector_link()
-                eef_link_names[i] = eef_link
                 target_leg_poses[i] = leg_group.get_random_pose(eef_link)
 
-            target_joint_state = self.compute_ik(target_leg_poses, eef_link_names)
-            self.set_joint_state(target_joint_state, step_rate=100, angle_step=0.01)
+            target_joint_values = self.compute_ik(target_leg_poses)
+            self.set_joint_state(target_joint_values, step_rate=100, angle_step=0.01)
 
 
     def get_joint_state(self):
