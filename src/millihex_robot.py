@@ -342,7 +342,7 @@ class Millihexapod:
         target_joint_values = np.zeros(NUM_JOINTS)
 
         for i in range(NUM_LEGS):
-            leg_group = self.move_groups[i + 1]
+            leg_group = self.move_groups[i]
             eef_link = leg_group.get_end_effector_link()
 
             # Compute IK for target leg pose
@@ -374,7 +374,7 @@ class Millihexapod:
             target_leg_poses = [None] * NUM_LEGS
 
             for i in range(NUM_LEGS):
-                leg_group = self.move_groups[i + 1]
+                leg_group = self.move_groups[i]
                 eef_link = leg_group.get_end_effector_link()
                 target_leg_poses[i] = leg_group.get_random_pose(eef_link)
 
@@ -384,68 +384,62 @@ class Millihexapod:
 
     def triangle_gait_2d(self):
         """
-        Returns x and y positions of a 2D triangular gait for a Millihex robot's foot.
-        
-        Parameters
-        ----------
-        h: float
-            Height of triangle gait (cm).
-        w: float
-            Width of triangle gait (cm).
-        T: float
-            Period of gait (sec).
-        t: float
-            Time vector (sec).
-        
-        Returns
-        -------
-        x: float
-            x position (cm) of robot foot at time t secs.
-        y: float
-           y position (cm) of robot foot at time t secs.
+        Commands a 2D triangular gait to a Millihex robot leg.
         """
 
         # Set gait parameters
         h = 1.0    # height (cm)
         w = 1.0    # width (cm)
         T = 4.0    # period (sec)
-        t = np.arange(0.0, 5 * T, 0.01)
 
-        # Get x and y position vs. time
-        x, y = self.triangle_gait_2d()
+        # Time to run through 1 gait period
+        time = np.arange(0, T, 0.8)
 
         # Time that foot is planted
         T_plant = T / 3
         T_offset = T_plant / 2
         
-        t_lift = np.where(((t % T) >= T_offset) & ((t % T) <= (T - T_offset)))
+        t_lift = np.where(((time % T) >= T_offset) & ((time % T) <= (T - T_offset)))
 
-        # y position
-        omega_y = 3 * np.pi / T
-        a_y = -(h / 2)
-        y_offset = h / 2
-        y = np.zeros(len(t)) + a_y + y_offset
-        y[t_lift] = a_y * np.cos(omega_y * ((t[t_lift] % T) - T_offset)) + y_offset
+        # z position trajectory
+        omega_z = 3 * np.pi / T
+        a_z = -(h / 2)
+        z_offset = h / 2
+        z_traj = np.zeros(len(time)) + a_z + z_offset
+        z_traj[t_lift] = a_z * np.cos(omega_z * ((time[t_lift] % T) - T_offset)) + z_offset
             
-        # x position
+        # x position trajectory
         omega_x = 2 * np.pi / T
         a_x = -(w / 2)
-        x = a_x * np.sin(omega_x * t)
-        
-        # Compute IK for desired gait trajectory
-        for i in range(NUM_LEGS):
-            leg_group = self.move_groups[i + 1]
-            eef_link = leg_group.get_end_effector_link()
+        x_traj = a_x * np.sin(omega_x * time)
 
-            # Set pose for all legs 
-            leg_pose = leg_group.get_current_pose(eef_link)
-            leg_group.set_joint_value_target(arg1=leg_pose, arg2=eef_link, arg3=True)
+        x_traj = [0.0, -2.0, 4.0, -4.0]
+        z_traj = [0.0,  0.5,  0.0, -0.5]
 
-            if i == 3:
-                leg_pose.pose.position.z += 1
-                leg_group.set_joint_value_target(arg1=leg_pose, arg2=eef_link, arg3=True)
-            
-            target_joint_values[(3*i):(3*i+3)] = leg_group.get_joint_value_target()
+        print(f"x_traj: {x_traj}")
+        print(f"z_traj: {z_traj}")
 
-        # Set joints to new joint state
-        self.set_joint_state(target_joint_values, step_rate=100, angle_step=0.01)
+        for t in range(len(x_traj)):
+            # Initialize PoseStamped array of target leg poses
+            target_leg_poses = [None] * NUM_LEGS
+
+            for i in range(NUM_LEGS):
+                leg_group = self.move_groups[i]
+                eef_link = leg_group.get_end_effector_link()
+
+                # Set pose for all legs 
+                leg_pose = leg_group.get_current_pose(eef_link)
+
+                # Test gait for 1 leg
+                if i == 4:
+                    leg_pose.pose.position.x = x_traj[t]
+                    leg_pose.pose.position.z = z_traj[t]
+                    print(f"(x,z): ({leg_pose.pose.position.x}, {leg_pose.pose.position.z})")
+                    print(leg_pose.pose)
+                
+                target_leg_poses[i] = leg_pose
+
+            target_joint_values = self.compute_ik(target_leg_poses)
+            self.set_joint_state(target_joint_values, step_rate=100, angle_step=0.01)
+            pause = rospy.Rate(0.5)
+            pause.sleep()

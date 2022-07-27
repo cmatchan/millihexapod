@@ -8,15 +8,11 @@ def main():
         millihex = Millihexapod()
         rate = rospy.Rate(0.5)
 
-        millihex.down()
-        rate.sleep()
-
         millihex.up()
         rate.sleep()
 
-        millihex.random_dancing()
-
-        # millihex.get_joint_state()
+        millihex.triangle_gait_2d()
+        # millihex.random_dancing()
 
     except rospy.ROSInterruptException:
         pass
