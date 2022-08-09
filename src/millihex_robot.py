@@ -128,6 +128,11 @@ class Millihexapod:
         for i in range(len(self.group_names)):
             self.move_groups[i] = moveit_commander.MoveGroupCommander(self.group_names[i])
 
+            # # Set goal tolerances for computing ik
+            # self.move_groups[i].set_goal_position_tolerance(0.005)
+            # self.move_groups[i].set_goal_orientation_tolerance(0.005)
+            # self.move_groups[i].set_goal_joint_tolerance(0.005)
+
         # Array of joint positions
         # Angle limits = [-pi/2, pi/2] rad
         self.joint_positions = np.zeros(NUM_JOINTS)
@@ -278,7 +283,7 @@ class Millihexapod:
             rate.sleep()
 
 
-    def up(self, joint_angle=(np.pi/6), step_rate=100, angle_step=0.01):
+    def up(self, joint_angle=(np.pi/4), step_rate=100, angle_step=0.01):
         """
         Commands the Millihex robot to stand up with all legs.
 
@@ -321,6 +326,69 @@ class Millihexapod:
         print("MILLIHEX DOWN\n")
         target_joint_state = np.zeros(NUM_JOINTS)
         self.set_joint_state(target_joint_state, step_rate=100, angle_step=0.01)
+    
+
+    def triangle_gait(self, step_rate=100, angle_step=0.01):
+
+        # Initialize standing joint state
+        target_joint_state = np.zeros(NUM_JOINTS) + (np.pi/4)
+        middle_joint = int(NUM_JOINTS / 2)
+        target_joint_state[0:middle_joint] *= -1
+
+        # Gait parameters (rad)
+        h = np.pi/4
+        w = np.pi/4
+
+        # Legs to move
+        legs = [1, 3, 5]
+
+        while True:
+            # Command leg to farthest back position
+            print("GAIT INITIALIZE\n")
+            for leg in legs:
+                leg_joint2 = self.get_joint_index(leg_number=leg, joint_number=2)
+                target_joint_state[leg_joint2] = 0
+
+            self.set_joint_state(target_joint_state, step_rate=100, angle_step=0.01)
+            pause = rospy.Rate(1)
+            pause.sleep()
+
+
+            print("LEG UP STROKE\n")
+            for leg in legs:
+                leg_joint1 = self.get_joint_index(leg_number=leg, joint_number=1)
+                leg_joint3 = self.get_joint_index(leg_number=leg, joint_number=3)
+
+                if leg <= int(NUM_LEGS / 2):
+                    target_joint_state[leg_joint1] += h/2
+                    target_joint_state[leg_joint3] += h/2
+                else:
+                    target_joint_state[leg_joint1] -= h/2
+                    target_joint_state[leg_joint3] -= h/2
+
+
+            self.set_joint_state(target_joint_state, step_rate=100, angle_step=0.01)
+            pause = rospy.Rate(2)
+            pause.sleep()
+
+            print("LEG DOWN STROKE\n")
+            for leg in legs:
+                leg_joint1 = self.get_joint_index(leg_number=leg, joint_number=1)
+                leg_joint2 = self.get_joint_index(leg_number=leg, joint_number=2)
+                leg_joint3 = self.get_joint_index(leg_number=leg, joint_number=3)
+
+                if leg <= int(NUM_LEGS / 2):
+                    target_joint_state[leg_joint1] -= h/2
+                    target_joint_state[leg_joint2] -= w
+                    target_joint_state[leg_joint3] -= h/2
+                else:
+                    target_joint_state[leg_joint1] += h/2
+                    target_joint_state[leg_joint2] += w
+                    target_joint_state[leg_joint3] += h/2
+                    
+            self.set_joint_state(target_joint_state, step_rate=100, angle_step=0.01)
+            pause = rospy.Rate(2)
+            pause.sleep()
         
 
     def compute_ik(self, target_leg_poses=[]):
@@ -381,45 +449,24 @@ class Millihexapod:
             target_joint_values = self.compute_ik(target_leg_poses)
             self.set_joint_state(target_joint_values, step_rate=100, angle_step=0.01)
 
-
     def triangle_gait_2d(self):
         """
-        Commands a 2D triangular gait to a Millihex robot leg.
+        Commands a 2D gait to a Millihex robot leg.
         """
 
-        # Set gait parameters
-        h = 1.0    # height (cm)
-        w = 1.0    # width (cm)
-        T = 4.0    # period (sec)
+        # Triangle gait, start middle
+        x_traj = np.array([0.01, 0.01, 0.0, 0.0, 0.02, 0.01])
+        z_traj = np.array([-0.04, -0.04, -0.04, 0.05, -0.04, -0.04])
 
-        # Time to run through 1 gait period
-        time = np.arange(0, T, 0.8)
+        traj = np.zeros((3, x_traj.size))
+        traj[0,:] += x_traj
+        traj[2,:] += z_traj
+        traj_diff = np.diff(traj, 1)
+        traj_diff_num_rows, traj_diff_num_cols = traj_diff.shape
 
-        # Time that foot is planted
-        T_plant = T / 3
-        T_offset = T_plant / 2
-        
-        t_lift = np.where(((time % T) >= T_offset) & ((time % T) <= (T - T_offset)))
+        for t in range(traj_diff_num_cols):
+            print(f"t = {t}")
 
-        # z position trajectory
-        omega_z = 3 * np.pi / T
-        a_z = -(h / 2)
-        z_offset = h / 2
-        z_traj = np.zeros(len(time)) + a_z + z_offset
-        z_traj[t_lift] = a_z * np.cos(omega_z * ((time[t_lift] % T) - T_offset)) + z_offset
-            
-        # x position trajectory
-        omega_x = 2 * np.pi / T
-        a_x = -(w / 2)
-        x_traj = a_x * np.sin(omega_x * time)
-
-        x_traj = [0.0, -2.0, 4.0, -4.0]
-        z_traj = [0.0,  0.5,  0.0, -0.5]
-
-        print(f"x_traj: {x_traj}")
-        print(f"z_traj: {z_traj}")
-
-        for t in range(len(x_traj)):
             # Initialize PoseStamped array of target leg poses
             target_leg_poses = [None] * NUM_LEGS
 
@@ -432,14 +479,15 @@ class Millihexapod:
 
                 # Test gait for 1 leg
                 if i == 4:
-                    leg_pose.pose.position.x = x_traj[t]
-                    leg_pose.pose.position.z = z_traj[t]
-                    print(f"(x,z): ({leg_pose.pose.position.x}, {leg_pose.pose.position.z})")
-                    print(leg_pose.pose)
+                    print(f"x position: {leg_pose.pose.position.x} + ({traj_diff[0][t]})")
+                    print(f"z position: {leg_pose.pose.position.z} + ({traj_diff[2][t]})")
+                    print(f"y position: {leg_pose.pose.position.y}\n")
+                    leg_pose.pose.position.x += traj_diff[0][t]
+                    leg_pose.pose.position.z += traj_diff[2][t]
                 
                 target_leg_poses[i] = leg_pose
 
             target_joint_values = self.compute_ik(target_leg_poses)
             self.set_joint_state(target_joint_values, step_rate=100, angle_step=0.01)
-            pause = rospy.Rate(0.5)
+            pause = rospy.Rate(1)
             pause.sleep()
