@@ -17,5 +17,16 @@ This command enters the image's Linux bash shell with ROS installed.
 1. Start the Docker container again.<br/>
 `$ docker start millihex`
 
-2. Enter the image bash shell.<br/>
+2. Enter the conteiner's Linux shell.<br/>
 `$ docker exec -it millihex bash`
+
+3. In the container shell, spawn a Millihex robot in Gazebo.<br/>
+`$ roslaunch millihexapod spawn_millihex.launch`
+
+4. Open a new terminal and repeat steps 1. and 2. to enter a second container
+shell.<br/>
+`$ docker start millihex`<br/>
+`$ docker exec -it millihex bash`
+
+5. In the second container shell, run the demo script.<br/>
+`$ rosrun millihexapod demo.py`
