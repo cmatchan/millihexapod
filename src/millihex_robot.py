@@ -2,12 +2,8 @@
 import sys
 import rospy
 import numpy as np
-import moveit_commander
 from std_msgs.msg import Float64
 from sensor_msgs.msg import JointState
-from moveit_msgs.msg import PositionIKRequest
-from geometry_msgs.msg import PoseStamped
-from moveit_msgs.srv import GetPositionIK
 
 # Millihex constants
 NUM_LEGS = 6
@@ -21,9 +17,6 @@ class Millihexapod:
 
     Attributes
     ----------
-    robot: RobotCommander
-        moveit_commander robot object to get the Millihex robot's current state.
-
     num_legs: int
         The number of legs in a Millihex robot. (default 6)
 
@@ -33,18 +26,6 @@ class Millihexapod:
     num_joints: int
         The total number of joints in a Millihex robot.
         (num_legs * joints_per_leg = 18)
-
-    group_names: str[]
-        An array of the names of all the leg move groups used by MoveIt to
-        compute the Inverse Kinematics. Each leg group contains link and joint
-        relations.
-
-        Leg group names:
-            ['leg1' 'leg2' 'leg3' 'leg4' 'leg5' 'leg6' ]
-
-    move_groups: MoveGroupCommander
-        moveit_commander move_group object to get and set leg move group states
-        and properties.
 
     joint_positions: float[]
         Stores the current state of all joints in a Millihex robot.
@@ -95,19 +76,11 @@ class Millihexapod:
 
     def __init__(self):
         """
-        Initializes MoveIt for leg trajectory planning.
         Starts ROS Publishers and Subscribers for getting and setting joint
         states and properties.
         """
         
         print("\n==================== Initializing Millihexapod ====================")
-        
-        # Remap /joint_states to /millihex/joint_states topic for MoveIt
-        joint_state_topic = ['joint_states:=/millihex/joint_states']
-
-        # Initialize moveit_commander
-        moveit_commander.roscpp_initialize(joint_state_topic)
-        self.robot = moveit_commander.RobotCommander()
 
         # Initialize rospy node
         rospy.init_node('robot_rock', anonymous=True)
@@ -118,22 +91,6 @@ class Millihexapod:
         self.num_legs = NUM_LEGS
         self.joints_per_leg = JOINTS_PER_LEG
         self.num_joints = NUM_JOINTS
-
-        # List of leg group names
-        self.group_names = self.robot.get_group_names()
-
-        # List of all leg groups
-        self.move_groups = [None] * len(self.group_names)
-
-        # Initialize MoveGroupCommander for all leg groups
-        print("\nInitializing MoveGroupCommander...")
-        for i in range(len(self.group_names)):
-            self.move_groups[i] = moveit_commander.MoveGroupCommander(self.group_names[i])
-
-            # # Set goal tolerances for computing ik
-            # self.move_groups[i].set_goal_position_tolerance(0.005)
-            # self.move_groups[i].set_goal_orientation_tolerance(0.005)
-            # self.move_groups[i].set_goal_joint_tolerance(0.005)
 
         # Array of joint positions
         # Angle limits = [-pi/2, pi/2] rad
@@ -156,7 +113,7 @@ class Millihexapod:
             continue
         
         print(f"{self.subscriber.name}, " \
-              f"connections = {self.subscriber.get_num_connections()}")
+              f"connections = {self.subscriber.get_num_connections()}\n")
         pause.sleep()
 
         print("==================== Millihexapod Initialized =====================\n")
@@ -395,18 +352,18 @@ class Millihexapod:
         rate = rospy.Rate(1)
         rate.sleep()
 
-        # Tripod leg stroke pattern
-        if pattern == "tripod":
-            right_stroke = [1, 3, 5]
-            left_stroke = [2, 4, 6]
-            leg_strokes = [right_stroke, left_stroke]
-
         # Bipod leg stroke pattern
-        elif pattern == "bipod":
+        if pattern == "bipod":
             stroke_1 = [1, 6]
             stroke_2 = [2, 5]
             stroke_3 = [3, 4]
             leg_strokes = [stroke_1, stroke_2, stroke_3]
+
+        # Tripod leg stroke pattern
+        elif pattern == "tripod":
+            right_stroke = [1, 3, 5]
+            left_stroke = [2, 4, 6]
+            leg_strokes = [right_stroke, left_stroke]
 
         # Set all legs to back stroke
         self.stroke_control(h=h, w=w, legs=range(1,NUM_LEGS+1), stroke="back",
@@ -420,62 +377,3 @@ class Millihexapod:
                 self.stroke_control("front", h, w, legs=leg_stroke, joint_state=joint_state)
                 self.stroke_control("down", h, w, legs=leg_stroke, joint_state=joint_state)
                 self.stroke_control("back", h, w, legs=leg_stroke, joint_state=joint_state)
-
-
-    def compute_ik(self, target_leg_poses=[]):
-        """
-        Computes Inverse Kinematics for a desired Millihex robot leg pose state.
-
-        Parameters
-        ----------
-        target_leg_poses: PoseStamped[]
-            An array of desired poses for all Millihex legs.
-
-        Returns
-        -------
-        target_joint_values: float[]
-            Array of joint values that achieve desired poses.
-        """
-
-        # Initialize array to compute new joint values
-        target_joint_values = np.zeros(NUM_JOINTS)
-
-        for i in range(NUM_LEGS):
-            leg_group = self.move_groups[i]
-            eef_link = leg_group.get_end_effector_link()
-
-            # Compute IK for target leg pose
-            leg_group.set_joint_value_target(arg1=target_leg_poses[i], arg2=eef_link, arg3=True)
-            target_joint_values[(3*i):(3*i+3)] = leg_group.get_joint_value_target()
-            
-        return target_joint_values
-
-
-    def random_dancing(self):
-        """
-        And now......Random Dancing!
-        """
-
-        print(f"And now", end="")
-        pause = rospy.Rate(5)
-        pause.sleep()
-
-        for i in range(6):
-            sys.stdout.write(".")
-            sys.stdout.flush()
-            pause.sleep()
-
-        print(f"Random Dancing!\n")
-        pause = rospy.Rate(2)
-        pause.sleep()
-
-        while True:
-            target_leg_poses = [None] * NUM_LEGS
-
-            for i in range(NUM_LEGS):
-                leg_group = self.move_groups[i]
-                eef_link = leg_group.get_end_effector_link()
-                target_leg_poses[i] = leg_group.get_random_pose(eef_link)
-
-            target_joint_values = self.compute_ik(target_leg_poses)
-            self.set_joint_state(target_joint_values)

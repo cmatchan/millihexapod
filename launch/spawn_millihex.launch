@@ -22,7 +22,4 @@
     <!-- Start robot joint controllers -->
     <include file="$(find millihexapod)/launch/start_controllers.launch" />
 
-    <!-- Start MoveIt -->
-    <include file="$(find millihexapod)/launch/start_moveit.launch" />
-
 </launch>

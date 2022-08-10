@@ -9,7 +9,7 @@ def main():
         millihex = Millihexapod()
 
         # millihex.walk(pattern="bipod", h=(np.pi/4), w=(np.pi/4))
-        millihex.walk(pattern="tripod", h=(np.pi/3), w=(np.pi/3))
+        millihex.walk(pattern="bipod", h=(np.pi/3), w=(np.pi/3))
 
         # millihex.random_dancing()
 
