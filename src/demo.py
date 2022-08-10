@@ -11,11 +11,9 @@ def main():
         millihex.up()
         rate.sleep()
 
-        millihex.triangle_gait()
-        
-        # millihex.up()
-
+        millihex.tripod()
         # millihex.random_dancing()
+
     except rospy.ROSInterruptException:
         pass
 

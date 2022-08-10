@@ -307,8 +307,8 @@ class Millihexapod:
         target_joint_state[0:middle_joint] *= -1
         self.set_joint_state(target_joint_state, step_rate=100, angle_step=0.01)
     
-
-    def down(self, step_rate=100, angle_step=0.01):
+    
+    def down(self):
         """
         Commands the Millihex robot to lay down flat.
 
@@ -325,70 +325,68 @@ class Millihexapod:
 
         print("MILLIHEX DOWN\n")
         target_joint_state = np.zeros(NUM_JOINTS)
-        self.set_joint_state(target_joint_state, step_rate=100, angle_step=0.01)
+        self.set_joint_state(target_joint_state)
     
 
-    def triangle_gait(self, step_rate=100, angle_step=0.01):
+    def triangle_gait(self, h=(np.pi/4), w=(np.pi/4), legs=[], stroke="down", joint_state=[]):
+        # Check that stroke parameter is valid
+        try:
+            stroke in ["down","up","back"]
+        except ValueError:
+            print("Invalid stroke. Must be ['down','up','back','front']")
 
-        # Initialize standing joint state
-        target_joint_state = np.zeros(NUM_JOINTS) + (np.pi/4)
+        for leg in legs:
+            leg_joint1 = self.get_joint_index(leg_number=leg, joint_number=1)
+            leg_joint2 = self.get_joint_index(leg_number=leg, joint_number=2)
+            leg_joint3 = self.get_joint_index(leg_number=leg, joint_number=3)
+
+            if leg <= int(NUM_LEGS / 2):
+                z = -h
+                x = -w
+            else:
+                z = h
+                x = w
+                
+            if stroke == "down":
+                joint_state[leg_joint1] += z/2
+                joint_state[leg_joint3] += z/2
+            elif stroke == "up":
+                joint_state[leg_joint1] -= z/2
+                joint_state[leg_joint3] -= z/2
+            elif stroke == "back":
+                joint_state[leg_joint2] = 0
+            else:
+                joint_state[leg_joint2] += x
+
+        self.set_joint_state(joint_state)
+        
+
+    def tripod(self, h=(np.pi/4), w=(np.pi/4)):
+
+        # Initialize standing joint state array
+        joint_state = np.zeros(NUM_JOINTS) + (np.pi/4)
         middle_joint = int(NUM_JOINTS / 2)
-        target_joint_state[0:middle_joint] *= -1
-
-        # Gait parameters (rad)
-        h = np.pi/4
-        w = np.pi/4
+        joint_state[0:middle_joint] *= -1
 
         # Legs to move
-        legs = [1, 3, 5]
+        right_legs = [1, 3, 5]
+        left_legs = [2, 4, 6]
+        leg_groups = [right_legs, left_legs]
+
+        self.triangle_gait(h=h, w=w, legs=(right_legs+left_legs), stroke="back", joint_state=joint_state)
+        pause = rospy.Rate(2)
+        pause.sleep()
 
         while True:
-            # Command leg to farthest back position
-            print("GAIT INITIALIZE\n")
-            for leg in legs:
-                leg_joint2 = self.get_joint_index(leg_number=leg, joint_number=2)
-                target_joint_state[leg_joint2] = 0
-
-            self.set_joint_state(target_joint_state, step_rate=100, angle_step=0.01)
-            pause = rospy.Rate(1)
-            pause.sleep()
-
-
-            print("LEG UP STROKE\n")
-            for leg in legs:
-                leg_joint1 = self.get_joint_index(leg_number=leg, joint_number=1)
-                leg_joint3 = self.get_joint_index(leg_number=leg, joint_number=3)
-
-                if leg <= int(NUM_LEGS / 2):
-                    target_joint_state[leg_joint1] += h/2
-                    target_joint_state[leg_joint3] += h/2
-                else:
-                    target_joint_state[leg_joint1] -= h/2
-                    target_joint_state[leg_joint3] -= h/2
-
-
-            self.set_joint_state(target_joint_state, step_rate=100, angle_step=0.01)
-            pause = rospy.Rate(2)
-            pause.sleep()
-
-            print("LEG DOWN STROKE\n")
-            for leg in legs:
-                leg_joint1 = self.get_joint_index(leg_number=leg, joint_number=1)
-                leg_joint2 = self.get_joint_index(leg_number=leg, joint_number=2)
-                leg_joint3 = self.get_joint_index(leg_number=leg, joint_number=3)
-
-                if leg <= int(NUM_LEGS / 2):
-                    target_joint_state[leg_joint1] -= h/2
-                    target_joint_state[leg_joint2] -= w
-                    target_joint_state[leg_joint3] -= h/2
-                else:
-                    target_joint_state[leg_joint1] += h/2
-                    target_joint_state[leg_joint2] += w
-                    target_joint_state[leg_joint3] += h/2
-                    
-            self.set_joint_state(target_joint_state, step_rate=100, angle_step=0.01)
-            pause = rospy.Rate(2)
-            pause.sleep()
+            for leg_group in leg_groups:
+                self.triangle_gait(h=h, w=w, legs=leg_group, stroke="up", joint_state=joint_state)
+                pause.sleep()
+                self.triangle_gait(h=h, w=w, legs=leg_group, stroke="front", joint_state=joint_state)
+                pause.sleep()
+                self.triangle_gait(h=h, w=w, legs=leg_group, stroke="down", joint_state=joint_state)
+                pause.sleep()
+                self.triangle_gait(h=h, w=w, legs=leg_group, stroke="back", joint_state=joint_state)
+                pause.sleep()
         
 
     def compute_ik(self, target_leg_poses=[]):
@@ -447,7 +445,7 @@ class Millihexapod:
                 target_leg_poses[i] = leg_group.get_random_pose(eef_link)
 
             target_joint_values = self.compute_ik(target_leg_poses)
-            self.set_joint_state(target_joint_values, step_rate=100, angle_step=0.01)
+            self.set_joint_state(target_joint_values)
 
     def triangle_gait_2d(self):
         """
@@ -488,6 +486,6 @@ class Millihexapod:
                 target_leg_poses[i] = leg_pose
 
             target_joint_values = self.compute_ik(target_leg_poses)
-            self.set_joint_state(target_joint_values, step_rate=100, angle_step=0.01)
+            self.set_joint_state(target_joint_values)
             pause = rospy.Rate(1)
             pause.sleep()
