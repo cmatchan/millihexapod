@@ -35,8 +35,9 @@ class Millihexapod:
         (num_legs * joints_per_leg = 18)
 
     group_names: str[]
-        An array of the names of all the leg move groups used by MoveIt to compute
-        the Inverse Kinematics. Each leg group contains link and joint relations.
+        An array of the names of all the leg move groups used by MoveIt to
+        compute the Inverse Kinematics. Each leg group contains link and joint
+        relations.
 
         Leg group names:
             ['leg1' 'leg2' 'leg3' 'leg4' 'leg5' 'leg6' ]
@@ -57,12 +58,13 @@ class Millihexapod:
              leg6_joint1  leg6_joint2  leg6_joint3]
     
     publishers: Publisher[]
-        An array of ROS Publisher objects that publish to the /command topic of the
-        Millihex robot's joint position controllers.
+        An array of ROS Publisher objects that publish to the /command topic of
+        the Millihex robot's joint position controllers.
 
     subscriber:
-        A ROS Subscriber object that subscribes to the Millihex robot /joint_states
-        topic and continuously updates the robot's current joint positions.
+        A ROS Subscriber object that subscribes to the Millihex robot
+        /joint_states topic and continuously updates the robot's current joint
+        positions.
 
     Methods
     -------
@@ -219,7 +221,8 @@ class Millihexapod:
                 # Initialize new publisher and add to array of publishers
                 joint_index = self.get_joint_index(leg_number, joint_number)
                 start_publisher_command = f"self.publishers[joint_index] = " \
-                    f"rospy.Publisher('{publisher_topic}', Float64, queue_size=10, latch=True)"
+                    f"rospy.Publisher('{publisher_topic}', " \
+                    f"Float64, queue_size=10, latch=True)"
                 exec(start_publisher_command)
 
                 # Make sure all publishers are connected before continuing
@@ -283,44 +286,21 @@ class Millihexapod:
             rate.sleep()
 
 
-    def up(self, joint_angle=(np.pi/4), step_rate=100, angle_step=0.01):
+    def up(self):
         """
         Commands the Millihex robot to stand up with all legs.
-
-        Parameters
-        ----------
-        joint_angle: float
-            Desired joint angle to publish to all joints.
-
-        setp_rate: int
-            Sets the rate for publishing each incremental angle towards the target
-            joint position.
-
-        angle_step: float
-            Sets the incremental angle step between each publish command sent to
-            the joint position controllers.
         """
 
         print("MILLIHEX UP\n")
-        target_joint_state = np.zeros(NUM_JOINTS) + joint_angle
+        target_joint_state = np.zeros(NUM_JOINTS) + (np.pi/4)
         middle_joint = int(NUM_JOINTS / 2)
         target_joint_state[0:middle_joint] *= -1
-        self.set_joint_state(target_joint_state, step_rate=100, angle_step=0.01)
+        self.set_joint_state(target_joint_state)
     
     
     def down(self):
         """
         Commands the Millihex robot to lay down flat.
-
-        Parameters
-        ----------
-        setp_rate: int
-            Sets the rate for publishing each incremental angle towards the target
-            joint position.
-
-        angle_step: float
-            Sets the incremental angle step between each publish command sent to
-            the joint position controllers.
         """
 
         print("MILLIHEX DOWN\n")
@@ -328,18 +308,46 @@ class Millihexapod:
         self.set_joint_state(target_joint_state)
     
 
-    def stroke_control(self, h=(np.pi/4), w=(np.pi/4), legs=[], stroke="down", joint_state=[]):
+    def stroke_control(self, stroke="down", h=(np.pi/4), w=(np.pi/4), legs=[],
+            joint_state=[]):
+        """
+        Rotate leg joints through a specified stroke edge as part of a circular
+        gait pattern.
+
+        Parameters
+        ----------
+        stroke: str
+            Specify Millihex leg stroke edge.
+            stroke = ["down", "up", "back", "front"]
+
+        h: float
+            Sets the vertical height parameter of the leg gait (z-direction).
+        
+        w: float
+            Sets the horizontal height parameter of the leg gait (x-direction).
+
+        legs: int[]
+            Legs for which to command joints.
+
+        joint_state = float[]
+            Current state of all joints in the Millihex robot.
+
+        """
+        
         # Check that stroke parameter is valid
         try:
-            stroke in ["down","up","back"]
+            stroke in ["down", "up", "back", "front"]
         except ValueError:
             print("Invalid stroke. Must be ['down','up','back','front']")
 
+        # Loop through leg groups to command position
         for leg in legs:
+            # Get joint index to move
             leg_joint1 = self.get_joint_index(leg_number=leg, joint_number=1)
             leg_joint2 = self.get_joint_index(leg_number=leg, joint_number=2)
             leg_joint3 = self.get_joint_index(leg_number=leg, joint_number=3)
 
+            # Define rotation orientation for right side legs
             if leg <= int(NUM_LEGS / 2):
                 z = -h
                 x = -w
@@ -347,6 +355,7 @@ class Millihexapod:
                 z = h
                 x = w
                 
+            # Control leg stroke joint positions
             if stroke == "down":
                 joint_state[leg_joint1] += z/2
                 joint_state[leg_joint3] += z/2
@@ -358,10 +367,27 @@ class Millihexapod:
             else:
                 joint_state[leg_joint2] += x
 
+        # Publish joint positions
         self.set_joint_state(joint_state)
         
 
     def walk(self, pattern="tripod", h=(np.pi/4), w=(np.pi/4)):
+        """
+        Commands the Millihex robot to walk with a specified gait pattern and
+        parameterization.
+
+        Parameters
+        ----------
+        pattern: str
+            Specify Millihex leg gait pattern.
+            pattern = ["bipod", "tripod"]
+
+        h: float
+            Sets the vertical height parameter of the leg gait (z-direction).
+        
+        w: float
+            Sets the horizontal height parameter of the leg gait (x-direction).
+        """
 
         # Initialize standing joint state array
         self.up()
@@ -383,16 +409,17 @@ class Millihexapod:
             leg_strokes = [stroke_1, stroke_2, stroke_3]
 
         # Set all legs to back stroke
-        self.stroke_control(h=h, w=w, legs=range(1,NUM_LEGS+1), stroke="back", joint_state=joint_state)
+        self.stroke_control(h=h, w=w, legs=range(1,NUM_LEGS+1), stroke="back",
+            joint_state=joint_state)
         rate.sleep()
 
         # Loop through leg stroke groups and execute a leg stroke
         while True:
             for leg_stroke in leg_strokes:
-                self.stroke_control(h=h, w=w, legs=leg_stroke, stroke="up", joint_state=joint_state)
-                self.stroke_control(h=h, w=w, legs=leg_stroke, stroke="front", joint_state=joint_state)
-                self.stroke_control(h=h, w=w, legs=leg_stroke, stroke="down", joint_state=joint_state)
-                self.stroke_control(h=h, w=w, legs=leg_stroke, stroke="back", joint_state=joint_state)
+                self.stroke_control("up", h, w, legs=leg_stroke, joint_state=joint_state)
+                self.stroke_control("front", h, w, legs=leg_stroke, joint_state=joint_state)
+                self.stroke_control("down", h, w, legs=leg_stroke, joint_state=joint_state)
+                self.stroke_control("back", h, w, legs=leg_stroke, joint_state=joint_state)
 
 
     def compute_ik(self, target_leg_poses=[]):
@@ -452,46 +479,3 @@ class Millihexapod:
 
             target_joint_values = self.compute_ik(target_leg_poses)
             self.set_joint_state(target_joint_values)
-
-    def triangle_gait_2d(self):
-        """
-        Commands a 2D gait to a Millihex robot leg.
-        """
-
-        # Triangle gait, start middle
-        x_traj = np.array([0.01, 0.01, 0.0, 0.0, 0.02, 0.01])
-        z_traj = np.array([-0.04, -0.04, -0.04, 0.05, -0.04, -0.04])
-
-        traj = np.zeros((3, x_traj.size))
-        traj[0,:] += x_traj
-        traj[2,:] += z_traj
-        traj_diff = np.diff(traj, 1)
-        traj_diff_num_rows, traj_diff_num_cols = traj_diff.shape
-
-        for t in range(traj_diff_num_cols):
-            print(f"t = {t}")
-
-            # Initialize PoseStamped array of target leg poses
-            target_leg_poses = [None] * NUM_LEGS
-
-            for i in range(NUM_LEGS):
-                leg_group = self.move_groups[i]
-                eef_link = leg_group.get_end_effector_link()
-
-                # Set pose for all legs 
-                leg_pose = leg_group.get_current_pose(eef_link)
-
-                # Test gait for 1 leg
-                if i == 4:
-                    print(f"x position: {leg_pose.pose.position.x} + ({traj_diff[0][t]})")
-                    print(f"z position: {leg_pose.pose.position.z} + ({traj_diff[2][t]})")
-                    print(f"y position: {leg_pose.pose.position.y}\n")
-                    leg_pose.pose.position.x += traj_diff[0][t]
-                    leg_pose.pose.position.z += traj_diff[2][t]
-                
-                target_leg_poses[i] = leg_pose
-
-            target_joint_values = self.compute_ik(target_leg_poses)
-            self.set_joint_state(target_joint_values)
-            pause = rospy.Rate(1)
-            pause.sleep()
