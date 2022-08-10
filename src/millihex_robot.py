@@ -328,7 +328,7 @@ class Millihexapod:
         self.set_joint_state(target_joint_state)
     
 
-    def triangle_gait(self, h=(np.pi/4), w=(np.pi/4), legs=[], stroke="down", joint_state=[]):
+    def stroke_control(self, h=(np.pi/4), w=(np.pi/4), legs=[], stroke="down", joint_state=[]):
         # Check that stroke parameter is valid
         try:
             stroke in ["down","up","back"]
@@ -361,33 +361,39 @@ class Millihexapod:
         self.set_joint_state(joint_state)
         
 
-    def tripod(self, h=(np.pi/4), w=(np.pi/4)):
+    def walk(self, pattern="tripod", h=(np.pi/4), w=(np.pi/4)):
 
         # Initialize standing joint state array
-        joint_state = np.zeros(NUM_JOINTS) + (np.pi/4)
-        middle_joint = int(NUM_JOINTS / 2)
-        joint_state[0:middle_joint] *= -1
+        self.up()
+        joint_state = self.joint_positions
+        rate = rospy.Rate(1)
+        rate.sleep()
 
-        # Legs to move
-        right_legs = [1, 3, 5]
-        left_legs = [2, 4, 6]
-        leg_groups = [right_legs, left_legs]
+        # Tripod leg stroke pattern
+        if pattern == "tripod":
+            right_stroke = [1, 3, 5]
+            left_stroke = [2, 4, 6]
+            leg_strokes = [right_stroke, left_stroke]
 
-        self.triangle_gait(h=h, w=w, legs=(right_legs+left_legs), stroke="back", joint_state=joint_state)
-        pause = rospy.Rate(2)
-        pause.sleep()
+        # Bipod leg stroke pattern
+        elif pattern == "bipod":
+            stroke_1 = [1, 6]
+            stroke_2 = [2, 5]
+            stroke_3 = [3, 4]
+            leg_strokes = [stroke_1, stroke_2, stroke_3]
 
+        # Set all legs to back stroke
+        self.stroke_control(h=h, w=w, legs=range(1,NUM_LEGS+1), stroke="back", joint_state=joint_state)
+        rate.sleep()
+
+        # Loop through leg stroke groups and execute a leg stroke
         while True:
-            for leg_group in leg_groups:
-                self.triangle_gait(h=h, w=w, legs=leg_group, stroke="up", joint_state=joint_state)
-                pause.sleep()
-                self.triangle_gait(h=h, w=w, legs=leg_group, stroke="front", joint_state=joint_state)
-                pause.sleep()
-                self.triangle_gait(h=h, w=w, legs=leg_group, stroke="down", joint_state=joint_state)
-                pause.sleep()
-                self.triangle_gait(h=h, w=w, legs=leg_group, stroke="back", joint_state=joint_state)
-                pause.sleep()
-        
+            for leg_stroke in leg_strokes:
+                self.stroke_control(h=h, w=w, legs=leg_stroke, stroke="up", joint_state=joint_state)
+                self.stroke_control(h=h, w=w, legs=leg_stroke, stroke="front", joint_state=joint_state)
+                self.stroke_control(h=h, w=w, legs=leg_stroke, stroke="down", joint_state=joint_state)
+                self.stroke_control(h=h, w=w, legs=leg_stroke, stroke="back", joint_state=joint_state)
+
 
     def compute_ik(self, target_leg_poses=[]):
         """

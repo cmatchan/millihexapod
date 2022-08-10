@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
 import sys
 import rospy
+import numpy as np
 from millihex_robot import Millihexapod
 
 def main():
     try:
         millihex = Millihexapod()
-        rate = rospy.Rate(0.5)
 
-        millihex.up()
-        rate.sleep()
-
-        millihex.tripod()
+        # millihex.walk(pattern="bipod", h=(np.pi/4), w=(np.pi/4))
+        millihex.walk(pattern="tripod", h=(np.pi/4), w=(np.pi/4))
+        
         # millihex.random_dancing()
 
     except rospy.ROSInterruptException:
