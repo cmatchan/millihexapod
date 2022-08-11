@@ -373,7 +373,6 @@ class Millihexapod:
         # Loop through leg stroke groups and execute a leg stroke
         while True:
             for leg_stroke in leg_strokes:
-                self.stroke_control("up", h, w, legs=leg_stroke, joint_state=joint_state)
-                self.stroke_control("front", h, w, legs=leg_stroke, joint_state=joint_state)
-                self.stroke_control("down", h, w, legs=leg_stroke, joint_state=joint_state)
-                self.stroke_control("back", h, w, legs=leg_stroke, joint_state=joint_state)
+                strokes = ["up","front","down","back"]
+                for stroke in strokes:
+                    self.stroke_control(stroke, h, w, legs=leg_stroke, joint_state=joint_state)
