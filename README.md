@@ -33,13 +33,5 @@ This command enters the image's Linux bash shell with ROS installed.
 3. Enable X11 Forwarding on your computer. If you use VcXsrv, click the
 `config.xlaunch` file in the `catkin_ws/src/millihexapod` directory.
 
-3. In the container shell, spawn a Millihex robot in Gazebo.<br/>
-`$ roslaunch millihexapod spawn_millihex.launch`
-
-4. Open a new terminal and repeat steps 1. and 2. to enter a second container
-shell.<br/>
-`$ docker start millihex`<br/>
-`$ docker exec -it millihex bash`
-
-5. In the second container shell, run the demo script.<br/>
+3. In the container shell, run the demo script.<br/>
 `$ rosrun millihexapod demo.py`

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-import sys
+
 import rospy
+import roslaunch
 import numpy as np
 from std_msgs.msg import Float64
 from sensor_msgs.msg import JointState
@@ -84,8 +85,18 @@ class Millihexapod:
 
         # Initialize rospy node
         rospy.init_node('robot_rock', anonymous=True)
-        pause = rospy.Rate(2)
+
+        # Execute launch file to spawn Millihex robot in Gazebo world
+        uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
+        roslaunch.configure_logging(uuid)
+        launch = roslaunch.parent.ROSLaunchParent(uuid, ["/root/catkin_ws/src/millihexapod/launch/spawn_millihex.launch"])
+        launch.start()
+
+        # Confirm launch file execution
+        print("Started spawn_millihex.launch\n")
+        pause = rospy.Rate(1)
         pause.sleep()
+
 
         # Millihex leg and joint count
         self.num_legs = NUM_LEGS
