@@ -3,16 +3,18 @@
     <arg name="object_name" default="obstacle" />
 
     <!-- Object spawn position -->
-    <arg name="x" default="0.0" />
-    <arg name="y" default="0.0" />
-    <arg name="z" default="0.2" />
+    <arg name="obstacle_l" default="0.2" />
+    <arg name="obstacle_w" default="0.5" />
+    <arg name="obstacle_h" default="0.02" />
+    <arg name="obstacle_d" default="0.3" />
     
     <!-- Load the URDF into the ROS Parameter Server -->
     <arg name="xacro_file_path" default="$(find millihexapod)/models/obstacle_description.xacro" />
-    <param name="robot_description" command="$(find xacro)/xacro $(arg xacro_file_path)" />
+    <param name="obstacle_description" command="$(find xacro)/xacro $(arg xacro_file_path)
+        l:=$(arg obstacle_l) w:=$(arg obstacle_w) h:=$(arg obstacle_h) d:=$(arg obstacle_d)"/>
 
     <!-- Send a service call to gazebo_ros to spawn a URDF robot -->
     <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
-        args="-urdf -x $(arg x) -y $(arg y) -z $(arg z)  -model $(arg object_name) -param robot_description" />
+        args="-urdf -model $(arg object_name) -param obstacle_description" />
 
 </launch>

@@ -4,33 +4,56 @@
 <!-- rosrun xacro xacro obstacle_description.xacro > obstacle_description.urdf -->
 
 <robot name="obstacle" xmlns:xacro="http://www.ros.org/wiki/xacro">
-    <xacro:arg name="x_arg" default="10"/>
-    <xacro:property name="x_property" value="$(arg x_arg)" />
+
+    <!-- Obstacle Parameters -->
+    <xacro:arg name="l" default="1"/>
+    <xacro:arg name="w" default="1"/>
+    <xacro:arg name="h" default="1"/>
+    <xacro:arg name="d" default="1"/>
+
+    <!-- Calculate Inertia Tensor of a Box -->
+    <xacro:macro name="box_inertia" params="mass x y z">
+        <inertia ixx="${(1 / 12) * mass * ((y * y) + (z * z))}" ixy = "0" ixz = "0"
+                 iyy="${(1 / 12) * mass * ((x * x) + (z * z))}" iyz = "0"
+                 izz="${(1 / 12) * mass * ((x * x) + (y * y))}" />
+    </xacro:macro>
 
     <link name="box">
         <inertial>
-            <origin xyz="2 0 0" />
+            <origin xyz="0 0 0" rpy="0 0 0" />
             <mass value="1.0" />
-            <inertia  ixx="1.0" ixy="0.0"  ixz="0.0"  iyy="100.0"  iyz="0.0"  izz="1.0" />
+            <inertia  ixx="1.0" ixy="0.0"  ixz="0.0"  iyy="1.0"  iyz="0.0"  izz="1.0" />
         </inertial>
 
         <visual>
-            <origin xyz="2 0 1"/>
+            <origin xyz="$(arg d) 0 0" rpy="0 0 0" />
             <geometry>
-                <box size="1 1 2" />
+                <box size="$(arg l) $(arg w) $(arg h)" />
             </geometry>
         </visual>
 
         <collision>
-            <origin xyz="2 0 1"/>
+            <origin xyz="$(arg d) 0 0" rpy="0 0 0" />
             <geometry>
-                <box size="1 1 2" />
+                <box size="$(arg l) $(arg w) $(arg h)" />
             </geometry>
         </collision>
     </link>
 
+    <!-- Fix the Obstacle to world -->
+    <link name="world"/>
+    <joint name="fixed" type="fixed">
+        <parent link="world"/>
+        <child link="box"/>
+    </joint>
+
     <!-- Gazebo properties -->
     <gazebo reference="box">
         <material>Gazebo/Blue</material>
+    </gazebo>
+
+    <!-- Make Obstacle stationary -->
+    <gazebo>
+        <static>true</static>
     </gazebo>
 </robot>

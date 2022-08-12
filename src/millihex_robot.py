@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+# KILL ALL PROCESSES
+#     $ killall -9 rosmaster & killall -9 gzserver & killall -9 gzclient
+
 import time
 import rospy
 import roslaunch
@@ -103,10 +106,10 @@ class Millihexapod:
             "/root/catkin_ws/src/millihexapod/launch/spawn_millihex.launch"
         self.execute_launch_file(self.spawn_millihex_launch_path)
 
-        # # Spawn Obstacle object in Gazebo
-        # self.spawn_obstacle_launch_path = \
-        #     "/root/catkin_ws/src/millihexapod/launch/spawn_obstacle.launch"
-        # self.execute_launch_file(self.spawn_obstacle_launch_path)
+        # Spawn Obstacle object in Gazebo
+        self.spawn_obstacle_launch_path = \
+            "/root/catkin_ws/src/millihexapod/launch/spawn_obstacle.launch"
+        self.execute_launch_file(self.spawn_obstacle_launch_path)
 
         # Millihex leg and joint count
         self.num_legs = NUM_LEGS
