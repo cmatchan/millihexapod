@@ -5,12 +5,16 @@ import numpy as np
 from millihex_robot import Millihexapod
 
 def main():
+    """
+    Usage: $ rosrun millihexapod demo.py
+    """
+
     try:
+        # Initialize Millihex robot
         millihex = Millihexapod()
 
-        # millihex.walk(pattern="bipod", h=(np.pi/4), w=(np.pi/4))
-        millihex.walk(pattern="bipod", h=(np.pi/3), w=(np.pi/3))
-        # millihex.random_dancing()
+        # Start Millihex robot walking tests
+        millihex.walk(pattern="tripod", h=(np.pi/3), w=(np.pi/3), stance=(np.pi/4))
 
     except rospy.ROSInterruptException:
         pass

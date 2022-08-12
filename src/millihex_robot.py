@@ -86,17 +86,19 @@ class Millihexapod:
         # Initialize rospy node
         rospy.init_node('robot_rock', anonymous=True)
 
-        # Execute launch file to spawn Millihex robot in Gazebo world
-        uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
-        roslaunch.configure_logging(uuid)
-        launch = roslaunch.parent.ROSLaunchParent(uuid, ["/root/catkin_ws/src/millihexapod/launch/spawn_millihex.launch"])
-        launch.start()
+        # Launch file paths
+        self.start_gazebo_launch_file_path = "/root/catkin_ws/src/millihexapod/launch/start_gazebo.launch"
+        self.spawn_millihex_launch_path = "/root/catkin_ws/src/millihexapod/launch/spawn_millihex.launch"
+        self.spawn_obstacle_launch_path = "/root/catkin_ws/src/millihexapod/launch/spawn_obstacle.launch"
+        
+        # Start an empty world in Gazebo
+        self.execute_launch_file(self.start_gazebo_launch_file_path)
 
-        # Confirm launch file execution
-        print("Started spawn_millihex.launch\n")
-        pause = rospy.Rate(1)
-        pause.sleep()
+        # Spawn Millihex robot in Gazebo
+        self.execute_launch_file(self.spawn_millihex_launch_path)
 
+        # Spawn Obstacle object in Gazebo
+        self.execute_launch_file(self.spawn_obstacle_launch_path)
 
         # Millihex leg and joint count
         self.num_legs = NUM_LEGS
@@ -125,10 +127,30 @@ class Millihexapod:
         
         print(f"{self.subscriber.name}, " \
               f"connections = {self.subscriber.get_num_connections()}\n")
-        pause.sleep()
+        rospy.sleep(1)
 
         print("==================== Millihexapod Initialized =====================\n")
-        pause.sleep()
+        rospy.sleep(1)
+
+
+    def execute_launch_file(self, launch_file_path):
+        """
+        Execute a launch file given it's path using the roslaunch command.
+
+        Parameters
+        ----------
+        launch_file_path : str
+            The full path of the launch file to execute from the /root directory.
+        """
+
+        uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
+        roslaunch.configure_logging(uuid)
+        launch = roslaunch.parent.ROSLaunchParent(uuid, [launch_file_path])
+        launch.start()
+        
+        # Sleep to ensure launch file is executed
+        rospy.sleep(1)
+        print(f"Executed: {launch_file_path}")
 
 
     def get_joint_index(self, leg_number, joint_number):
@@ -339,7 +361,7 @@ class Millihexapod:
         self.set_joint_state(joint_state)
         
 
-    def walk(self, pattern="tripod", h=(np.pi/4), w=(np.pi/4)):
+    def walk(self, pattern="tripod", h=(np.pi/4), w=(np.pi/4), stance=(np.pi/4)):
         """
         Commands the Millihex robot to walk with a specified gait pattern and
         parameterization.
@@ -357,12 +379,6 @@ class Millihexapod:
             Sets the horizontal height parameter of the leg gait (x-direction).
         """
 
-        # Initialize standing joint state array
-        self.up()
-        joint_state = self.joint_positions
-        rate = rospy.Rate(1)
-        rate.sleep()
-
         # Bipod leg stroke pattern
         if pattern == "bipod":
             stroke_1 = [1, 6]
@@ -376,10 +392,14 @@ class Millihexapod:
             left_stroke = [2, 4, 6]
             leg_strokes = [right_stroke, left_stroke]
 
+        # Initialize standing joint state array
+        joint_state = np.zeros(NUM_JOINTS) + stance
+        middle_joint = int(NUM_JOINTS / 2)
+        joint_state[0:middle_joint] *= -1
+
         # Set all legs to back stroke
         self.stroke_control(h=h, w=w, legs=range(1,NUM_LEGS+1), stroke="back",
             joint_state=joint_state)
-        rate.sleep()
 
         # Loop through leg stroke groups and execute a leg stroke
         while True:
