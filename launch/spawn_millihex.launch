@@ -2,13 +2,13 @@
     <!-- Spawn Millihex in Gazebo -->
     <arg name="robot_name" default="millihex" />
 
-    <!-- Robot spawn position -->
+    <!-- Millihex spawn position -->
     <arg name="x" default="0.0" />
     <arg name="y" default="0.0" />
     <arg name="z" default="0.2" />
 
     <!-- Load the URDF into the ROS Parameter Server -->
-    <arg name="xacro_file_path" default="$(find millihexapod)/robot/millihex_description.xacro" />
+    <arg name="xacro_file_path" default="$(find millihexapod)/models/millihex_description.xacro" />
     <param name="robot_description" command="$(find xacro)/xacro $(arg xacro_file_path)" />
 
     <!-- Send a service call to gazebo_ros to spawn a URDF robot -->

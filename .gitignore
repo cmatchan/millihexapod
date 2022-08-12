@@ -1,2 +1,3 @@
 __pycache__
-/robot/millihex_description.urdf
+/models/millihex_description.urdf
+/models/obstacle_description.urdf

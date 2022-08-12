@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
+import time
 import rospy
 import roslaunch
+import subprocess
 import numpy as np
 from std_msgs.msg import Float64
 from sensor_msgs.msg import JointState
@@ -82,23 +84,29 @@ class Millihexapod:
         """
         
         print("\n==================== Initializing Millihexapod ====================")
+        
+        # Start roscore
+        subprocess.Popen('roscore')
+        time.sleep(1)
 
         # Initialize rospy node
         rospy.init_node('robot_rock', anonymous=True)
-
-        # Launch file paths
-        self.start_gazebo_launch_file_path = "/root/catkin_ws/src/millihexapod/launch/start_gazebo.launch"
-        self.spawn_millihex_launch_path = "/root/catkin_ws/src/millihexapod/launch/spawn_millihex.launch"
-        self.spawn_obstacle_launch_path = "/root/catkin_ws/src/millihexapod/launch/spawn_obstacle.launch"
+        rospy.sleep(1)
         
         # Start an empty world in Gazebo
+        self.start_gazebo_launch_file_path = \
+            "/root/catkin_ws/src/millihexapod/launch/start_gazebo.launch"
         self.execute_launch_file(self.start_gazebo_launch_file_path)
 
         # Spawn Millihex robot in Gazebo
+        self.spawn_millihex_launch_path = \
+            "/root/catkin_ws/src/millihexapod/launch/spawn_millihex.launch"
         self.execute_launch_file(self.spawn_millihex_launch_path)
 
-        # Spawn Obstacle object in Gazebo
-        self.execute_launch_file(self.spawn_obstacle_launch_path)
+        # # Spawn Obstacle object in Gazebo
+        # self.spawn_obstacle_launch_path = \
+        #     "/root/catkin_ws/src/millihexapod/launch/spawn_obstacle.launch"
+        # self.execute_launch_file(self.spawn_obstacle_launch_path)
 
         # Millihex leg and joint count
         self.num_legs = NUM_LEGS
@@ -133,7 +141,7 @@ class Millihexapod:
         rospy.sleep(1)
 
 
-    def execute_launch_file(self, launch_file_path):
+    def execute_launch_file(self, launch_file_path, args=[]):
         """
         Execute a launch file given it's path using the roslaunch command.
 
@@ -145,12 +153,20 @@ class Millihexapod:
 
         uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
         roslaunch.configure_logging(uuid)
-        launch = roslaunch.parent.ROSLaunchParent(uuid, [launch_file_path])
-        launch.start()
         
+        # Add command-line args to launch file
+        cli_args = [launch_file_path]
+        cli_args.extend(args)
+        roslaunch_args = cli_args[1:]
+        roslaunch_file = [(roslaunch.rlutil.resolve_launch_arguments(cli_args)[0], roslaunch_args)]
+
+        # Execute launch file
+        parent = roslaunch.parent.ROSLaunchParent(uuid, roslaunch_file)
+        parent.start()
+
         # Sleep to ensure launch file is executed
         rospy.sleep(1)
-        print(f"Executed: {launch_file_path}")
+        print(f"\nEXECUTED: {launch_file_path}\n")
 
 
     def get_joint_index(self, leg_number, joint_number):
