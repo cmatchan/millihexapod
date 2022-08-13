@@ -252,7 +252,7 @@ class Millihexapod:
         self.joint_positions = np.asarray(ros_data.position)
 
 
-    def set_joint_state(self, target_joint_state=[], step_rate=100, angle_step=0.01):
+    def set_joint_state(self, target_joint_state=[], step_rate=100, angle_step=0.02):
         """
         Publishes the target_joint_state array of joint values to the Millihex
         joint position controllers /command topic.

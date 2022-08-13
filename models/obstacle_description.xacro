@@ -11,6 +11,12 @@
     <xacro:arg name="h" default="0.02"/>
     <xacro:arg name="d" default="0.3"/>
 
+    <!-- Obstacle Friction -->
+    <xacro:property name="kp" value="100000.0" />  <!-- Contact stiffness -->
+    <xacro:property name="kd" value="1.0" />        <!-- Contact damping -->
+    <xacro:property name="mu1" value="1000.0" />     <!-- Friction coefficient 1 -->
+    <xacro:property name="mu2" value="1000.0" />     <!-- Friction coefficient 2 -->
+
     <!-- Wall Parameters -->
     <xacro:property name="wall_l" value="0.01" />
     <xacro:property name="wall_h" value="0.2" />
@@ -56,6 +62,10 @@
 
     <!-- Gazebo properties -->
     <gazebo reference="obstacle">
+        <kp>${kp}</kp>
+        <kd>${kd}</kd>
+        <mu1>${mu1}</mu1>
+        <mu2>${mu2}</mu2>
         <material>Gazebo/White</material>
     </gazebo>
 
