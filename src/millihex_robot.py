@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+# KILLALL: $ killall -9 rosmaster & killall -9 gzserver & killall -9 gzclient
+
 import time
 import rospy
 import roslaunch

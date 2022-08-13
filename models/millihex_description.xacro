@@ -53,7 +53,7 @@
     <xacro:property name="joint_link_mass"
         value="${pcb_density * (pi * (joint_link_r * joint_link_r) * joint_link_l)}" />  <!-- (kg) -->
 
-    <!-- Link Friction and -->
+    <!-- Link Friction -->
     <xacro:property name="link_kp" value="100000.0" />  <!-- Contact stiffness -->
     <xacro:property name="link_kd" value="1.0" />        <!-- Contact damping -->
     <xacro:property name="link_mu1" value="100.0" />     <!-- Friction coefficient 1 -->
