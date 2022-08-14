@@ -1,0 +1,126 @@
+<?xml version="1.0" ?>
+
+<!-- Generate URDF: -->
+<!-- rosrun xacro xacro room_description.xacro > room_description.urdf -->
+
+<robot name="room" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+    <!-- Wall Parameters -->
+    <xacro:property name="wall_l" value="0.01" />
+    <xacro:property name="wall_h" value="0.2" />
+    <xacro:property name="back_wall_w" value="0.5" />
+    <xacro:property name="side_wall_w" value="0.65" />
+
+    <!-- Define world link -->
+    <link name="world"/>
+
+    <!-- Make all objects stationary -->
+    <gazebo>
+        <static>true</static>
+    </gazebo>
+
+    <!-- Back Wall -->
+    <link name="back_wall">
+        <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <mass value="1.0" />
+            <inertia  ixx="1.0" ixy="0.0"  ixz="0.0"  iyy="1.0"  iyz="0.0"  izz="1.0" />
+        </inertial>
+
+        <visual>
+            <origin xyz="${-back_wall_w/2 + 0.005} 0 0" rpy="0 0 0" />
+            <geometry>
+                <box size="${wall_l} ${back_wall_w} ${wall_h}" />
+            </geometry>
+        </visual>
+
+        <collision>
+            <origin xyz="${-back_wall_w/2 + 0.005} 0 0" rpy="0 0 0" />
+            <geometry>
+                <box size="${wall_l} ${back_wall_w} ${wall_h}" />
+            </geometry>
+        </collision>
+    </link>
+
+    <!-- Fix Back Wall to world -->
+    <joint name="back_wall_fixed_joint" type="fixed">
+        <parent link="world"/>
+        <child link="back_wall"/>
+    </joint>
+    
+    <!-- Gazebo properties -->
+    <gazebo reference="back_wall">
+        <material>Gazebo/White</material>
+    </gazebo>
+
+
+    <!-- Left Wall -->
+    <link name="left_wall">
+        <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <mass value="1.0" />
+            <inertia  ixx="1.0" ixy="0.0"  ixz="0.0"  iyy="1.0"  iyz="0.0"  izz="1.0" />
+        </inertial>
+
+        <visual>
+            <origin xyz="0.075 ${back_wall_w/2} 0" rpy="0 0 ${pi/2}" />
+            <geometry>
+                <box size="${wall_l} ${side_wall_w} ${wall_h}" />
+            </geometry>
+        </visual>
+
+        <collision>
+            <origin xyz="0.075 ${back_wall_w/2} 0" rpy="0 0 ${pi/2}" />
+            <geometry>
+                <box size="${wall_l} ${side_wall_w} ${wall_h}" />
+            </geometry>
+        </collision>
+    </link>
+
+    <!-- Fix Left Wall to world -->
+    <joint name="left_wall_fixed_joint" type="fixed">
+        <parent link="world"/>
+        <child link="left_wall"/>
+    </joint>
+    
+    <!-- Gazebo properties -->
+    <gazebo reference="left_wall">
+        <material>Gazebo/White</material>
+    </gazebo>
+
+
+    <!-- Right Wall -->
+    <link name="right_wall">
+        <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <mass value="1.0" />
+            <inertia  ixx="1.0" ixy="0.0"  ixz="0.0"  iyy="1.0"  iyz="0.0"  izz="1.0" />
+        </inertial>
+
+        <visual>
+            <origin xyz="0.075 ${-back_wall_w/2} 0" rpy="0 0 ${pi/2}" />
+            <geometry>
+                <box size="${wall_l} ${side_wall_w} ${wall_h}" />
+            </geometry>
+        </visual>
+
+        <collision>
+            <origin xyz="0.075 ${-back_wall_w/2} 0" rpy="0 0 ${pi/2}" />
+            <geometry>
+                <box size="${wall_l} ${side_wall_w} ${wall_h}" />
+            </geometry>
+        </collision>
+    </link>
+
+    <!-- Fix Right Wall to world -->
+    <joint name="right_wall_fixed_joint" type="fixed">
+        <parent link="world"/>
+        <child link="right_wall"/>
+    </joint>
+    
+    <!-- Gazebo properties -->
+    <gazebo reference="right_wall">
+        <material>Gazebo/White</material>
+    </gazebo>
+
+</robot>

@@ -14,4 +14,8 @@
         <arg name="server_required" value="true"/>
         <arg name="gui_required" value="true"/>
     </include>
+
+    <!-- Spawn room in Gazebo world -->
+    <include file="$(find millihexapod)/launch/spawn_room.launch" />
+
 </launch>
