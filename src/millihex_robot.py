@@ -86,14 +86,19 @@ class Millihexapod:
         Starts ROS Publishers and Subscribers for getting and setting joint
         states and properties.
         """
-        
-        # Start roscore
-        subprocess.Popen('roscore')
-        time.sleep(1)
 
-        # Initialize rospy node
-        rospy.init_node('robot_rock', anonymous=True)
-        rospy.sleep(1)
+        # ------------------------- Define Attributes -------------------------
+
+        # Millihex leg and joint count
+        self.num_legs = NUM_LEGS
+        self.joints_per_leg = JOINTS_PER_LEG
+        self.num_joints = NUM_JOINTS
+
+        # Array of joint positions
+        self.joint_positions = np.zeros(NUM_JOINTS)    # [-pi/2, pi/2] rad
+
+        # Millihex COM position
+        self.robot_position = 0.0
         
         # Launch file paths
         self.start_gazebo_launch_file_path = \
@@ -102,65 +107,28 @@ class Millihexapod:
             "/root/catkin_ws/src/millihexapod/launch/spawn_millihex.launch"
         self.spawn_obstacle_launch_file_path = \
             "/root/catkin_ws/src/millihexapod/launch/spawn_obstacle.launch"
-
-        # Millihex leg and joint count
-        self.num_legs = NUM_LEGS
-        self.joints_per_leg = JOINTS_PER_LEG
-        self.num_joints = NUM_JOINTS
-
-        # Array of joint positions
-        # Angle limits = [-pi/2, pi/2] rad
-        self.joint_positions = np.zeros(NUM_JOINTS)
         
-        # List of joint publishers
-        self.publishers = [None] * NUM_JOINTS
+        # Publishers
+        self.publishers = [None] * NUM_JOINTS    # /command
+
+        # Subscribers
+        self.joint_states_subscriber = None    # /millihex/joint_states
+        self.model_states_subscriber = None    # /gazebo/model_states
+        
+        # ---------------------- Initialization Sequence ----------------------
+
+        # Start roscore
+        subprocess.Popen('roscore')
+        time.sleep(1)
+
+        # Initialize rospy node
+        rospy.init_node('robot_rock', anonymous=True)
+        rospy.sleep(1)
 
         # Start Gazebo and spawn Millihex and obstacle models
         self.spawn_model("gazebo")
         self.spawn_model("obstacle")
         self.spawn_model("millihex")
-
-
-    def spawn_model(self, model_name, args=[]):
-        # Check that model_name parameter is valid
-        try:
-            model_name in ["millihex", "obstacle", "gazebo"]
-        except ValueError:
-            print("Invalid model name. Must be ['millihex','obstacle','gazebo']")
-
-        if model_name == "millihex":
-            print("\n==================== Initializing Millihexapod ====================")
-            self.execute_launch_file(self.spawn_millihex_launch_file_path)
-
-            # Start all joint position controllers for /command topic
-            print("\nWaiting for Joint Position Controller Publishers...")
-            self.start_joint_position_controller_publishers()
-
-            # Subscribe to /millihex/joint_states topic
-            print("\nWaiting for Joint States Subscriber...")
-            self.subscriber = rospy.Subscriber("/millihex/joint_states", \
-                JointState, self.joint_states_subscriber_callback)
-
-            # Make sure subscriber is connected before continuing
-            while (self.subscriber.get_num_connections() < 1):
-                continue
-            
-            print(f"{self.subscriber.name}, " \
-                f"connections = {self.subscriber.get_num_connections()}\n")
-            rospy.sleep(1)
-            print("==================== Millihexapod Initialized =====================\n")
-
-        elif model_name == "obstacle":
-            print("\n====================== Initializing Obstacle ======================")
-            self.execute_launch_file(self.spawn_obstacle_launch_file_path, args)
-            print("====================== Obstacle Initialized =======================\n")
-
-        else:
-            print("\n======================= Initializing Gazebo =======================")
-            self.execute_launch_file(self.start_gazebo_launch_file_path)
-            print("======================= Gazebo Initialized ========================\n")
-
-        rospy.sleep(1)
 
 
     def execute_launch_file(self, launch_file_path, args=[]):
@@ -189,35 +157,6 @@ class Millihexapod:
         # Sleep to ensure launch file is executed
         rospy.sleep(1)
         print(f"\nEXECUTED: {launch_file_path} as {roslaunch_file}\n")
-
-    
-    def delete_model(self, model_name):
-        # Wait to connect to gazebo delete_model service
-        rospy.wait_for_service('/gazebo/delete_model')
-
-        try:
-            # Call DeleteModel service
-            delete_model_srv = rospy.ServiceProxy('/gazebo/delete_model', DeleteModel)
-
-            # Instantiate DeleteModel service request and set model_name parameter
-            delete_model_req = DeleteModelRequest()
-            delete_model_req.model_name = model_name
-
-            delete_model_resp = delete_model_srv(delete_model_req)
-            
-            if delete_model_resp.success:
-                print(f"node names: {rosnode.get_node_names()}\n")
-                if model_name == "millihex":
-                    rosnode.kill_nodes(["/millihex/controller_spawner",
-                        "/robot_state_publisher"])
-                print(f"{delete_model_resp.status_message} \'{model_name}\'\n")
-                return 0
-            else:
-                print(f"{delete_model_resp.status_message} \'{model_name}\'\n")
-                return 1
-
-        except rospy.ServiceException as e:
-            print(f"DeleteModel Service call failed: {e}")
 
 
     def get_joint_index(self, leg_number, joint_number):
@@ -288,7 +227,7 @@ class Millihexapod:
 
                 print(f"{self.publishers[joint_index].name}, " \
                     f"connections = {self.publishers[joint_index].get_num_connections()}")
-
+                    
 
     def joint_states_subscriber_callback(self, ros_data):
         """
@@ -299,6 +238,77 @@ class Millihexapod:
 
         # Convert /joint_states joint position tuple to array
         self.joint_positions = np.asarray(ros_data.position)
+
+
+    def spawn_model(self, model_name, args=[]):
+        # Check that model_name parameter is valid
+        try:
+            model_name in ["millihex", "obstacle", "gazebo"]
+        except ValueError:
+            print("Invalid model name. Must be ['millihex','obstacle','gazebo']")
+
+        if model_name == "millihex":
+            print("\n==================== Initializing Millihexapod ====================")
+            self.execute_launch_file(self.spawn_millihex_launch_file_path)
+
+            # Start all joint position controllers for /command topic
+            print("\nWaiting for Joint Position Controller Publishers...")
+            self.start_joint_position_controller_publishers()
+
+            # Subscribe to /millihex/joint_states topic
+            print("\nWaiting for Joint States Subscriber...")
+            self.joint_states_subscriber = rospy.Subscriber("/millihex/joint_states", \
+                JointState, self.joint_states_subscriber_callback)
+
+            # Make sure subscriber is connected before continuing
+            while (self.joint_states_subscriber.get_num_connections() < 1):
+                continue
+            
+            print(f"{self.joint_states_subscriber.name}, " \
+                f"connections = {self.joint_states_subscriber.get_num_connections()}\n")
+            rospy.sleep(1)
+            print("==================== Millihexapod Initialized =====================\n")
+
+        elif model_name == "obstacle":
+            print("\n====================== Initializing Obstacle ======================")
+            self.execute_launch_file(self.spawn_obstacle_launch_file_path, args)
+            print("====================== Obstacle Initialized =======================\n")
+
+        else:
+            print("\n======================= Initializing Gazebo =======================")
+            self.execute_launch_file(self.start_gazebo_launch_file_path)
+            print("======================= Gazebo Initialized ========================\n")
+
+        rospy.sleep(1)
+
+    
+    def delete_model(self, model_name):
+        # Wait to connect to gazebo delete_model service
+        rospy.wait_for_service('/gazebo/delete_model')
+
+        try:
+            # Call DeleteModel service
+            delete_model_srv = rospy.ServiceProxy('/gazebo/delete_model', DeleteModel)
+
+            # Instantiate DeleteModel service request and set model_name parameter
+            delete_model_req = DeleteModelRequest()
+            delete_model_req.model_name = model_name
+
+            delete_model_resp = delete_model_srv(delete_model_req)
+            
+            if delete_model_resp.success:
+                print(f"node names: {rosnode.get_node_names()}\n")
+                if model_name == "millihex":
+                    rosnode.kill_nodes(["/millihex/controller_spawner",
+                        "/robot_state_publisher"])
+                print(f"{delete_model_resp.status_message} \'{model_name}\'\n")
+                return 0
+            else:
+                print(f"{delete_model_resp.status_message} \'{model_name}\'\n")
+                return 1
+
+        except rospy.ServiceException as e:
+            print(f"DeleteModel Service call failed: {e}")
 
 
     def set_joint_state(self, target_joint_state=[], step_rate=100, angle_step=0.02):
@@ -468,8 +478,8 @@ class Millihexapod:
         self.stroke_control(h=h, w=w, legs=range(1,NUM_LEGS+1), stroke="back",
             joint_state=joint_state)
 
-        # Loop through leg stroke groups and execute a leg stroke
         while True:
+            # Loop through leg stroke groups and execute a leg stroke
             for leg_stroke in leg_strokes:
                 strokes = ["up","front","down","back"]
                 for stroke in strokes:
