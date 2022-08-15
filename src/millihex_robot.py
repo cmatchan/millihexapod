@@ -4,11 +4,13 @@
 
 import time
 import rospy
+import rosnode
 import roslaunch
 import subprocess
 import numpy as np
 from std_msgs.msg import Float64
 from sensor_msgs.msg import JointState
+from gazebo_msgs.srv import DeleteModel, DeleteModelRequest
 
 # Millihex constants
 NUM_LEGS = 6
@@ -85,8 +87,6 @@ class Millihexapod:
         states and properties.
         """
         
-        print("\n==================== Initializing Millihexapod ====================")
-        
         # Start roscore
         subprocess.Popen('roscore')
         time.sleep(1)
@@ -95,20 +95,13 @@ class Millihexapod:
         rospy.init_node('robot_rock', anonymous=True)
         rospy.sleep(1)
         
-        # Start an empty world in Gazebo
+        # Launch file paths
         self.start_gazebo_launch_file_path = \
             "/root/catkin_ws/src/millihexapod/launch/start_gazebo.launch"
-        self.execute_launch_file(self.start_gazebo_launch_file_path)
-
-        # Spawn Millihex robot in Gazebo
-        self.spawn_millihex_launch_path = \
+        self.spawn_millihex_launch_file_path = \
             "/root/catkin_ws/src/millihexapod/launch/spawn_millihex.launch"
-        self.execute_launch_file(self.spawn_millihex_launch_path)
-
-        # Spawn Obstacle object in Gazebo
-        self.spawn_obstacle_launch_path = \
+        self.spawn_obstacle_launch_file_path = \
             "/root/catkin_ws/src/millihexapod/launch/spawn_obstacle.launch"
-        self.execute_launch_file(self.spawn_obstacle_launch_path)
 
         # Millihex leg and joint count
         self.num_legs = NUM_LEGS
@@ -122,24 +115,51 @@ class Millihexapod:
         # List of joint publishers
         self.publishers = [None] * NUM_JOINTS
 
-        # Start all joint position controllers for /command topic
-        print("\nWaiting for Joint Position Controller Publishers...")
-        self.start_joint_position_controller_publishers()
+        # Start Gazebo and spawn Millihex and obstacle models
+        self.spawn_model("gazebo")
+        self.spawn_model("obstacle")
+        self.spawn_model("millihex")
 
-        # Subscribe to /millihex/joint_states topic
-        print("\nWaiting for Joint States Subscriber...")
-        self.subscriber = rospy.Subscriber("/millihex/joint_states", \
-            JointState, self.joint_states_subscriber_callback)
 
-        # Make sure subscriber is connected before continuing
-        while (self.subscriber.get_num_connections() < 1):
-            continue
-        
-        print(f"{self.subscriber.name}, " \
-              f"connections = {self.subscriber.get_num_connections()}\n")
-        rospy.sleep(1)
+    def spawn_model(self, model_name, obstacle_h=0.02):
+        # Check that model_name parameter is valid
+        try:
+            model_name in ["millihex", "obstacle", "gazebo"]
+        except ValueError:
+            print("Invalid model name. Must be ['millihex','obstacle','gazebo']")
 
-        print("==================== Millihexapod Initialized =====================\n")
+        if model_name == "millihex":
+            print("\n==================== Initializing Millihexapod ====================")
+            self.execute_launch_file(self.spawn_millihex_launch_file_path)
+
+            # Start all joint position controllers for /command topic
+            print("\nWaiting for Joint Position Controller Publishers...")
+            self.start_joint_position_controller_publishers()
+
+            # Subscribe to /millihex/joint_states topic
+            print("\nWaiting for Joint States Subscriber...")
+            self.subscriber = rospy.Subscriber("/millihex/joint_states", \
+                JointState, self.joint_states_subscriber_callback)
+
+            # Make sure subscriber is connected before continuing
+            while (self.subscriber.get_num_connections() < 1):
+                continue
+            
+            print(f"{self.subscriber.name}, " \
+                f"connections = {self.subscriber.get_num_connections()}\n")
+            rospy.sleep(1)
+            print("==================== Millihexapod Initialized =====================\n")
+
+        elif model_name == "obstacle":
+            print("\n====================== Initializing Obstacle ======================")
+            self.execute_launch_file(self.spawn_obstacle_launch_file_path)
+            print("====================== Obstacle Initialized =======================\n")
+
+        else:
+            print("\n======================= Initializing Gazebo =======================")
+            self.execute_launch_file(self.start_gazebo_launch_file_path)
+            print("======================= Gazebo Initialized ========================\n")
+
         rospy.sleep(1)
 
 
@@ -168,7 +188,36 @@ class Millihexapod:
 
         # Sleep to ensure launch file is executed
         rospy.sleep(1)
-        print(f"\nEXECUTED: {launch_file_path}\n")
+        print(f"\nEXECUTED: {launch_file_path} as {roslaunch_file}\n")
+
+    
+    def delete_model(self, model_name):
+        # Wait to connect to gazebo delete_model service
+        rospy.wait_for_service('/gazebo/delete_model')
+
+        try:
+            # Call DeleteModel service
+            delete_model_srv = rospy.ServiceProxy('/gazebo/delete_model', DeleteModel)
+
+            # Instantiate DeleteModel service request and set model_name parameter
+            delete_model_req = DeleteModelRequest()
+            delete_model_req.model_name = model_name
+
+            delete_model_resp = delete_model_srv(delete_model_req)
+            
+            if delete_model_resp.success:
+                print(f"node names: {rosnode.get_node_names()}\n")
+                if model_name == "millihex":
+                    rosnode.kill_nodes(["/millihex/controller_spawner",
+                        "/robot_state_publisher"])
+                print(f"{delete_model_resp.status_message} \'{model_name}\'\n")
+                return 0
+            else:
+                print(f"{delete_model_resp.status_message} \'{model_name}\'\n")
+                return 1
+
+        except rospy.ServiceException as e:
+            print(f"DeleteModel Service call failed: {e}")
 
 
     def get_joint_index(self, leg_number, joint_number):
