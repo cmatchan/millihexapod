@@ -227,7 +227,26 @@ class Millihexapod:
 
                 print(f"{self.publishers[joint_index].name}, " \
                     f"connections = {self.publishers[joint_index].get_num_connections()}")
-                    
+
+
+    def start_subscriber(self, topic_name, message_type, callback_function):
+        print(f"\nWaiting for {topic_name} Subscriber...")
+        
+        # Subscribe to ROS topic
+        subscriber_name = "self.{topic_name}_subscriber"
+        start_subscriber_command = f"{subscriber_name} = " \
+            f"rospy.Subscriber(topic_name, message_type, callback_function)"
+        exec(start_subscriber_command)
+
+        # Get number of connections to subscriber
+        num_connections = exec(f"{subscriber_name}.get_num_connections()")
+
+        # Make sure subscriber is connected before continuing
+        while (num_connections < 1):
+            continue
+        
+        print(f"{topic_name}, connections = {num_connections}\n")
+
 
     def joint_states_subscriber_callback(self, ros_data):
         """
@@ -266,7 +285,6 @@ class Millihexapod:
             
             print(f"{self.joint_states_subscriber.name}, " \
                 f"connections = {self.joint_states_subscriber.get_num_connections()}\n")
-            rospy.sleep(1)
             print("==================== Millihexapod Initialized =====================\n")
 
         elif model_name == "obstacle":
