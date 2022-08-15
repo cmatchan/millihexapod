@@ -121,7 +121,7 @@ class Millihexapod:
         self.spawn_model("millihex")
 
 
-    def spawn_model(self, model_name, obstacle_h=0.02):
+    def spawn_model(self, model_name, args=[]):
         # Check that model_name parameter is valid
         try:
             model_name in ["millihex", "obstacle", "gazebo"]
@@ -152,7 +152,7 @@ class Millihexapod:
 
         elif model_name == "obstacle":
             print("\n====================== Initializing Obstacle ======================")
-            self.execute_launch_file(self.spawn_obstacle_launch_file_path)
+            self.execute_launch_file(self.spawn_obstacle_launch_file_path, args)
             print("====================== Obstacle Initialized =======================\n")
 
         else:
