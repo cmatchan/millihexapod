@@ -2,11 +2,9 @@
 
 # KILLALL: $ killall -9 rosmaster & killall -9 gzserver & killall -9 gzclient
 
-import time
 import rospy
 import rosnode
 import roslaunch
-import subprocess
 import numpy as np
 from std_msgs.msg import Float64
 from sensor_msgs.msg import JointState
@@ -87,8 +85,6 @@ class Millihexapod:
         Starts ROS Publishers and Subscribers for getting and setting joint
         states and properties.
         """
-
-        # ------------------------- Define Attributes -------------------------
 
         # Millihex leg and joint count
         self.num_legs = NUM_LEGS
