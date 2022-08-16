@@ -98,8 +98,11 @@ class Millihexapod:
         # Array of joint positions
         self.joint_positions = np.zeros(NUM_JOINTS)    # [-pi/2, pi/2] rad
 
-        # Millihex COM x-position
-        self.robot_position_x = 0.0
+        # State of world models
+        self.model_states = None
+
+        # Publishers
+        self.joint_publishers = [None] * NUM_JOINTS
         
         # Launch file paths
         self.start_gazebo_launch_file_path = \
@@ -108,27 +111,6 @@ class Millihexapod:
             "/root/catkin_ws/src/millihexapod/launch/spawn_millihex.launch"
         self.spawn_obstacle_launch_file_path = \
             "/root/catkin_ws/src/millihexapod/launch/spawn_obstacle.launch"
-        
-        # Publishers
-        self.joint_publishers = [None] * NUM_JOINTS
-
-        # Subscribers
-        self.subscribers = [None]
-        
-        # ---------------------- Initialization Sequence ----------------------
-
-        # Start roscore
-        subprocess.Popen('roscore')
-        time.sleep(1)
-
-        # Initialize rospy node
-        rospy.init_node('robot_rock', anonymous=True)
-        rospy.sleep(1)
-
-        # Start Gazebo and spawn Millihex and obstacle models
-        self.spawn_model("gazebo")
-        self.spawn_model("obstacle")
-        self.spawn_model("millihex")
 
 
     def execute_launch_file(self, launch_file_path, args=[]):
@@ -245,7 +227,6 @@ class Millihexapod:
         
         # Add subscriber to list
         print(f"{topic_name}, connections = {new_subscriber.get_num_connections()}\n")
-        self.subscribers.append(new_subscriber)
         return 0
 
 
@@ -268,11 +249,8 @@ class Millihexapod:
         COM x-position.
         """
 
-        # Update robot_position attribute
-        millihex_index = ros_data.name.index("millihex")
-        x = ros_data.pose[millihex_index].position.x
-        self.robot_position_x = np.asarray(x)
-        # print(f"x: {self.robot_position_x}")
+        # Update model_states attribute
+        self.model_states = ros_data
         return 0
 
 
@@ -298,8 +276,6 @@ class Millihexapod:
             # Subscribe to /gazebo/modes_states topic
             self.start_subscriber("/gazebo/model_states", ModelStates,
                 self.model_states_subscriber_callback)
-
-            print(f"node names: {rosnode.get_node_names()}\n")
             
             print("==================== Millihexapod Initialized =====================\n")
 
@@ -313,7 +289,6 @@ class Millihexapod:
             self.execute_launch_file(self.start_gazebo_launch_file_path)
             print("======================= Gazebo Initialized ========================\n")
 
-        rospy.sleep(1)
         return 0
 
     
@@ -332,10 +307,11 @@ class Millihexapod:
             delete_model_resp = delete_model_srv(delete_model_req)
             
             if delete_model_resp.success:
-                print(f"node names: {rosnode.get_node_names()}\n")
                 if model_name == "millihex":
                     rosnode.kill_nodes(["/millihex/controller_spawner",
                         "/robot_state_publisher"])
+
+                print(f"nodes after delete: {rosnode.get_node_names()}\n")
                 print(f"{delete_model_resp.status_message} \'{model_name}\'\n")
                 return 0
             else:
@@ -499,6 +475,9 @@ class Millihexapod:
             Sets the horizontal height parameter of the leg gait (x-direction).
         """
 
+        self.down()
+        print("MILLIHEX WALK\n")
+
         # Bipod leg stroke pattern
         if pattern == "bipod":
             stroke_1 = [1, 6]
@@ -521,13 +500,18 @@ class Millihexapod:
         self.stroke_control(stroke="back", gait_x=gait_x, gait_z=gait_z,
             legs=range(1,NUM_LEGS+1), joint_state=joint_state, step=step)
 
-        while self.robot_position_x <= 0.03:
+        while self.model_states.pose[self.model_states.name.index("millihex")].position.x <= 0.03:
             # Loop through leg stroke groups and execute a leg stroke
             for leg_stroke in leg_strokes:
                 strokes = ["up","front","down","back"]
                 for stroke in strokes:
                     self.stroke_control(stroke, gait_x, gait_z, legs=leg_stroke,
                         joint_state=joint_state, step=step)
+
+        # Reset attributes
+        self.joint_positions = np.zeros(NUM_JOINTS)
+        self.model_states = None
+        self.joint_publishers = [None] * NUM_JOINTS
 
         # Delete models after test
         self.delete_model("millihex")
