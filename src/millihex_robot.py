@@ -265,14 +265,14 @@ class Millihexapod:
             # Start all joint position controllers for /command topic
             self.start_joint_publishers()
 
-            # Subscribe to /millihex/joint_states topic
-            self.start_subscriber("/millihex/joint_states", JointState,
-                self.joint_states_subscriber_callback)
-            
-            # Subscribe to /gazebo/modes_states topic
+            # Subscribe to /gazebo/model_states topic
             self.start_subscriber("/gazebo/model_states", ModelStates,
                 self.model_states_subscriber_callback)
             
+            # Subscribe to /millihex/joint_states topic
+            self.start_subscriber("/millihex/joint_states", JointState,
+                self.joint_states_subscriber_callback)
+
             print("==================== Millihexapod Initialized =====================\n")
 
         elif model_name == "obstacle":
@@ -488,7 +488,7 @@ class Millihexapod:
             leg_strokes = [right_stroke, left_stroke]
 
         # Initialize standing joint state array
-        joint_state = np.zeros(NUM_JOINTS) + stance
+        joint_state = np.zeros(NUM_JOINTS) + stance/2
         middle_joint = int(NUM_JOINTS / 2)
         joint_state[0:middle_joint] *= -1
 
@@ -496,7 +496,8 @@ class Millihexapod:
         self.stroke_control(stroke="back", gait_x=gait_x, gait_z=gait_z,
             legs=range(1,NUM_LEGS+1), joint_state=joint_state, step=step)
 
-        while self.model_states.pose[self.model_states.name.index("millihex")].position.x <= 0.03:
+        while self.model_states.pose[self.model_states.name.index("millihex")].position.x <= 0.3:
+            print(f"x: {self.model_states.pose[self.model_states.name.index('millihex')].position.x}")
             # Loop through leg stroke groups and execute a leg stroke
             for leg_stroke in leg_strokes:
                 strokes = ["up","front","down","back"]

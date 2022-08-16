@@ -26,21 +26,36 @@ def main():
         # Start Gazebo
         millihex.spawn_model("gazebo")
 
-        # Gait and obstacle parameters
-        x = np.pi/3
-        z = np.pi/3
-        stance = np.pi/4
-        step = 0.02
-        h = 0.05
+        # Gait and obstacle parameters, range=(min, max)
+        x = np.pi/2         # (pi/8, pi/2)
+        z = np.pi/2         # (pi/8, pi)
+        stance = np.pi/2    # (pi/8, pi/2)
+        step = 0.04         # (0.01, 0.5)
+        h = 0.05            # (0.01, 0.15)
 
-        # Data collection loop
-        while True:
-            # Spawn models
-            millihex.spawn_model("obstacle", args=[f"obstacle_h:={h}"])
-            millihex.spawn_model("millihex")
+        # Spawn models and start walk test
+        millihex.spawn_model("obstacle", args=[f"obstacle_h:={h}"])
+        millihex.spawn_model("millihex")
+        millihex.walk(pattern="tripod", gait_x=x, gait_z=z, stance=stance, step=step)
 
-            # Start walking test
-            millihex.walk(pattern="tripod", gait_x=x, gait_z=z, stance=stance, step=step)
+
+        # Parameter sweep (N^5 data points)
+        N = 4
+        x_range = np.linspace(np.pi/8, np.pi/2, N)
+        z_range = np.linspace(np.pi/8, np.pi, N)
+        stance_range = np.linspace(np.pi/8, np.pi/2, N)
+        step_range = np.linspace(0.01, 0.5, N)
+        h_range = np.linspace(0.01, 0.15, N)
+
+        # Data collection
+        for x in x_range:
+            for z in z_range:
+                for stance in stance_range:
+                    for step in step_range:
+                        for h in h_range:
+                            millihex.spawn_model("obstacle", args=[f"obstacle_h:={h}"])
+                            millihex.spawn_model("millihex")
+                            millihex.walk(pattern="tripod", gait_x=x, gait_z=z, stance=stance, step=step)
 
     except rospy.ROSInterruptException:
         pass
