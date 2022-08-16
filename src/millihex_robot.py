@@ -112,8 +112,7 @@ class Millihexapod:
         self.publishers = [None] * NUM_JOINTS    # /command
 
         # Subscribers
-        self.joint_states_subscriber = None    # /millihex/joint_states
-        self.model_states_subscriber = None    # /gazebo/model_states
+        self.subscribers = [None]
         
         # ---------------------- Initialization Sequence ----------------------
 
@@ -207,6 +206,8 @@ class Millihexapod:
             /millihex/leg#_joint#_position_controller/command
         """
 
+        print("\nWaiting for Joint Position Controller Publishers...")
+
         # Leg and joint number indices start from 1
         for leg_number in range(1, NUM_LEGS + 1):
             for joint_number in range(1, JOINTS_PER_LEG + 1):
@@ -233,19 +234,19 @@ class Millihexapod:
         print(f"\nWaiting for {topic_name} Subscriber...")
         
         # Subscribe to ROS topic
-        subscriber_name = "self.{topic_name}_subscriber"
-        start_subscriber_command = f"{subscriber_name} = " \
-            f"rospy.Subscriber(topic_name, message_type, callback_function)"
-        exec(start_subscriber_command)
-
-        # Get number of connections to subscriber
-        num_connections = exec(f"{subscriber_name}.get_num_connections()")
+        new_subscriber = rospy.Subscriber(topic_name, message_type, callback_function)
 
         # Make sure subscriber is connected before continuing
-        while (num_connections < 1):
+        while (new_subscriber.get_num_connections() < 1):
             continue
         
-        print(f"{topic_name}, connections = {num_connections}\n")
+        # Add subscriber to list
+        print(f"{topic_name}, connections = {new_subscriber.get_num_connections()}\n")
+        self.subscribers.append(new_subscriber)
+
+
+    def get_subscriber(self, topic_name):
+        pass
 
 
     def joint_states_subscriber_callback(self, ros_data):
@@ -271,20 +272,11 @@ class Millihexapod:
             self.execute_launch_file(self.spawn_millihex_launch_file_path)
 
             # Start all joint position controllers for /command topic
-            print("\nWaiting for Joint Position Controller Publishers...")
             self.start_joint_position_controller_publishers()
 
             # Subscribe to /millihex/joint_states topic
-            print("\nWaiting for Joint States Subscriber...")
-            self.joint_states_subscriber = rospy.Subscriber("/millihex/joint_states", \
-                JointState, self.joint_states_subscriber_callback)
-
-            # Make sure subscriber is connected before continuing
-            while (self.joint_states_subscriber.get_num_connections() < 1):
-                continue
-            
-            print(f"{self.joint_states_subscriber.name}, " \
-                f"connections = {self.joint_states_subscriber.get_num_connections()}\n")
+            self.start_subscriber("/millihex/joint_states", JointState,
+                self.joint_states_subscriber_callback)
             print("==================== Millihexapod Initialized =====================\n")
 
         elif model_name == "obstacle":
