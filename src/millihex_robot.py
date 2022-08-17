@@ -498,14 +498,40 @@ class Millihexapod:
         self.stroke_control(stroke="back", gait_x=gait_x, gait_z=gait_z,
             legs=range(1,NUM_LEGS+1), joint_state=joint_state, step=step)
 
-        while self.model_states.pose[self.model_states.name.index("millihex")].position.x <= 0.25:
-            print(f"x: {self.model_states.pose[self.model_states.name.index('millihex')].position.x}")
+        # Set timeout limit
+        N_min = 2
+        time_limit = rospy.Duration(N_min*60) # timeout at N_min mins
+
+        print(f"time_limit: {time_limit.secs}")
+
+        # Set goal x-position
+        x_position_goal = 0.25
+
+        # Initialize return parameter
+        success = 1
+
+        # Initialize timer
+        epoch = rospy.Time.now()
+
+        # Gait is successful if 
+        while self.model_states.pose[self.model_states.name.index("millihex")].position.x \
+                <= x_position_goal:
+
+            # Break if time exceeds timeout
+            if (rospy.Time.now() - epoch) >= time_limit:
+                success = 0
+                break
+
             # Loop through leg stroke groups and execute a leg stroke
             for leg_stroke in leg_strokes:
                 strokes = ["up","front","down","back"]
                 for stroke in strokes:
                     self.stroke_control(stroke, gait_x, gait_z, legs=leg_stroke,
                         joint_state=joint_state, step=step)
+                    print(f"t: {(rospy.Time.now() - epoch).secs} secs | x: {self.model_states.pose[self.model_states.name.index('millihex')].position.x:.5f} m")
+
+        # Duration
+        duration = (rospy.Time.now() - epoch).secs
 
         # Reset attributes
         self.joint_positions = np.zeros(NUM_JOINTS)
@@ -515,4 +541,6 @@ class Millihexapod:
         # Delete models after test
         self.delete_model("millihex")
         self.delete_model("obstacle")
-        return 1
+
+        # Return result
+        return success, duration

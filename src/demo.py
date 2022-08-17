@@ -40,31 +40,31 @@ def main():
         # Spawn models and start walk test
         millihex.spawn_model("obstacle", args=[f"obstacle_h:={h}"])
         millihex.spawn_model("millihex")
-        result = millihex.walk(pattern=pattern, gait_x=x, gait_z=z, stance=stance, step=step)
+        (success, duration) = millihex.walk(pattern=pattern, gait_x=x, gait_z=z, stance=stance, step=step)
 
         # Insert parameters to results database
-        insert_result(x, z, h, step, stance, pattern, success=result)
+        insert_result(x, z, h, step, stance, pattern, success, duration)
 
         # Parameters (N^6 data points)
         N = 4
         x_range = np.linspace(np.pi/8, np.pi/2, N)
         z_range = np.linspace(np.pi/8, np.pi, N)
-        stance_range = np.linspace(np.pi/8, np.pi/2, N)
-        step_range = np.linspace(0.01, 0.5, N)
         h_range = np.linspace(0.01, 0.15, N)
+        step_range = np.linspace(0.01, 0.5, N)
+        stance_range = np.linspace(np.pi/8, np.pi/2, N)
         pattern_range = ["bipod", "tripod", "quadruped", "pentapod"]
 
         # Parameter sweep and data collection
-        for x in x_range:
-            for z in z_range:
-                for stance in stance_range:
-                    for step in step_range:
-                        for h in h_range:
-                            for pattern in pattern_range:
+        for pattern in pattern_range:
+            for x in x_range:
+                for z in z_range:
+                    for h in h_range:
+                        for step in step_range:
+                            for stance in stance_range:
                                 millihex.spawn_model("obstacle", args=[f"obstacle_h:={h}"])
                                 millihex.spawn_model("millihex")
-                                millihex.walk(pattern, gait_x=x, gait_z=z, stance=stance, step=step)
-                                insert_result(x, z, h, step, stance, pattern, success=result)
+                                (success, duration) = millihex.walk(pattern=pattern, gait_x=x, gait_z=z, stance=stance, step=step)
+                                insert_result(x, z, h, step, stance, pattern, success, duration)
 
     except rospy.ROSInterruptException:
         pass
@@ -101,7 +101,8 @@ def create_results_table():
                             step REAL NOT NULL,
                             stance REAL NOT NULL,
                             pattern TEXT NOT NULL,
-                            success INTEGER NOT NULL
+                            success INTEGER NOT NULL,
+                            duration INTEGER NOT NULL
                         ); """
 
     # Create a database connection
@@ -113,14 +114,14 @@ def create_results_table():
         print("Error! Could not create the database connection.")
 
 
-def insert_result(x, z, h, step, stance, pattern, success):
+def insert_result(x, z, h, step, stance, pattern, success, duration):
     # Database file path for parameter sweep results table
     database = r"/root/catkin_ws/src/millihexapod/db/results.db"
 
     # Insert row SQL command
-    row = """ INSERT INTO results(x, z, h, step, stance, pattern, success)
-              VALUES(?, ?, ?, ?, ?, ?, ?) """
-    result = (x, z, h, step, stance, pattern, success)
+    row = """ INSERT INTO results(x, z, h, step, stance, pattern, success, duration)
+              VALUES(?, ?, ?, ?, ?, ?, ?, ?) """
+    result = (x, z, h, step, stance, pattern, success, duration)
 
     # Create a database connection
     conn = create_connection(database)
