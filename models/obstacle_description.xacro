@@ -13,9 +13,9 @@
 
     <!-- Obstacle Friction -->
     <xacro:property name="kp" value="100000.0" />  <!-- Contact stiffness -->
-    <xacro:property name="kd" value="1.0" />        <!-- Contact damping -->
-    <xacro:property name="mu1" value="100.0" />     <!-- Friction coefficient 1 -->
-    <xacro:property name="mu2" value="100.0" />     <!-- Friction coefficient 2 -->
+    <xacro:property name="kd" value="100000.0" />      <!-- Contact damping -->
+    <xacro:property name="mu1" value="100000.0" /> <!-- Friction coefficient 1 -->
+    <xacro:property name="mu2" value="100000.0" /> <!-- Friction coefficient 2 -->
 
     <!-- Define world link -->
     <link name="world"/>
