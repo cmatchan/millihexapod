@@ -10,7 +10,7 @@
     <xacro:property name="wall_h" value="0.15" />
     <xacro:property name="back_wall_w" value="0.5" />
     <xacro:property name="side_wall_w" value="0.65" />
-    <xacro:property name="floor_h" value="0.005" />
+    <xacro:property name="floor_h" value="0.001" />
 
     <!-- Floor Friction -->
     <xacro:property name="kp" value="100000.0" />  <!-- Contact stiffness -->

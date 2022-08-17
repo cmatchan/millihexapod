@@ -516,7 +516,7 @@ class Millihexapod:
         self.stroke_control(stroke="back", gait_x=gait_x, gait_z=gait_z,
             legs=range(1,NUM_LEGS+1), joint_state=joint_state, step=step)
 
-        while self.model_states.pose[self.model_states.name.index("millihex")].position.x <= 0.3:
+        while self.model_states.pose[self.model_states.name.index("millihex")].position.x <= 0.25:
             print(f"x: {self.model_states.pose[self.model_states.name.index('millihex')].position.x}")
             # Loop through leg stroke groups and execute a leg stroke
             for leg_stroke in leg_strokes:
