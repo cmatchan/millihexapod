@@ -462,7 +462,7 @@ class Millihexapod:
         ----------
         pattern: str
             Specify Millihex leg gait pattern.
-            pattern = ["bipod", "tripod"]
+            pattern = ["bipod", "tripod", "quadruped", "pentapod"]
 
         h: float
             Sets the vertical height parameter of the leg gait (z-direction).
@@ -473,6 +473,13 @@ class Millihexapod:
 
         self.down()
         print("MILLIHEX WALK\n")
+        
+        # Check that gait pattern is valid
+        try:
+            pattern in ["bipod", "tripod", "quadruped", "pentapod"]
+        except ValueError:
+            print("Invalid pattern. Must be ['bipod','tripod','quadruped','pentapod']")
+            return 1
 
         # Bipod leg stroke pattern
         if pattern == "bipod":
@@ -483,9 +490,22 @@ class Millihexapod:
 
         # Tripod leg stroke pattern
         elif pattern == "tripod":
-            right_stroke = [1, 3, 5]
-            left_stroke = [2, 4, 6]
-            leg_strokes = [right_stroke, left_stroke]
+            stroke_1 = [1, 3, 5]
+            stroke_2 = [2, 4, 6]
+            leg_strokes = [stroke_1, stroke_2]
+
+        # Quadruped leg stroke pattern
+        elif pattern == "quadruped":
+            stroke_1 = [1, 4]
+            stroke_2 = [2, 5]
+            stroke_3 = [3, 6]
+            leg_strokes = [stroke_1, stroke_2, stroke_3]
+
+        # Pentapod leg stroke pattern
+        elif pattern == "pentapod":
+            leg_strokes = list(range(1, NUM_LEGS+1))
+            leg_strokes = [leg_strokes[x:x+1] for x in range(0, len(leg_strokes))]
+            print(f"leg_strokes: {leg_strokes}\n")
 
         # Initialize standing joint state array
         joint_state = np.zeros(NUM_JOINTS) + stance/2

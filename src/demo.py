@@ -27,16 +27,17 @@ def main():
         millihex.spawn_model("gazebo")
 
         # Gait and obstacle parameters, range=(min, max)
-        x = np.pi/2         # (pi/8, pi/2)
-        z = np.pi/2         # (pi/8, pi)
-        stance = np.pi/2    # (pi/8, pi/2)
-        step = 0.04         # (0.01, 0.5)
-        h = 0.05            # (0.01, 0.15)
+        x = np.pi/2             # (pi/8, pi/2)
+        z = np.pi/2             # (pi/8, pi)
+        stance = np.pi/2        # (pi/8, pi/2)
+        step = 0.02             # (0.01, 0.5)
+        h = 0.02                # (0.01, 0.15)
+        pattern = "bipod"   # ["bipod", "tripod", "quadruped", "pentapod"]
 
         # Spawn models and start walk test
         millihex.spawn_model("obstacle", args=[f"obstacle_h:={h}"])
         millihex.spawn_model("millihex")
-        millihex.walk(pattern="tripod", gait_x=x, gait_z=z, stance=stance, step=step)
+        millihex.walk(pattern=pattern, gait_x=x, gait_z=z, stance=stance, step=step)
 
 
         # Parameter sweep (N^5 data points)
@@ -46,6 +47,7 @@ def main():
         stance_range = np.linspace(np.pi/8, np.pi/2, N)
         step_range = np.linspace(0.01, 0.5, N)
         h_range = np.linspace(0.01, 0.15, N)
+        pattern_range = ["bipod", "tripod", "quadruped", "pentapod"]
 
         # Data collection
         for x in x_range:
@@ -53,9 +55,10 @@ def main():
                 for stance in stance_range:
                     for step in step_range:
                         for h in h_range:
-                            millihex.spawn_model("obstacle", args=[f"obstacle_h:={h}"])
-                            millihex.spawn_model("millihex")
-                            millihex.walk(pattern="tripod", gait_x=x, gait_z=z, stance=stance, step=step)
+                            for pattern in pattern_range:
+                                millihex.spawn_model("obstacle", args=[f"obstacle_h:={h}"])
+                                millihex.spawn_model("millihex")
+                                millihex.walk(pattern, gait_x=x, gait_z=z, stance=stance, step=step)
 
     except rospy.ROSInterruptException:
         pass
