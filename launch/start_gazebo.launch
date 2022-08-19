@@ -8,11 +8,11 @@
         <arg name="paused" value="false"/>
         <arg name="use_sim_time" value="true"/>
         <arg name="gui" value="true"/>
-        <arg name="recording" value="false"/> <!-- AKA headless (deprecated) -->
+        <arg name="recording" value="true"/> <!-- AKA headless (deprecated) -->
         <arg name="debug" value="false"/>
         <arg name="verbose" value="true"/>
         <arg name="server_required" value="true"/>
-        <arg name="gui_required" value="true"/>
+        <arg name="gui_required" value="false"/>
     </include>
 
     <!-- Spawn room in Gazebo world -->
