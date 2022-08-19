@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
-import os
 import time
 import rospy
 import sqlite3
 import subprocess
 import numpy as np
+from os import path
 from sqlite3 import Error
 from millihex_robot import Millihexapod
 
@@ -13,6 +13,19 @@ def main():
     """
     Usage: $ rosrun millihexapod demo.py
     """
+
+    # Database file path for parameter sweep results table
+    database = r"/root/catkin_ws/src/millihexapod/db/results.db"
+
+    # Check if SQL database exists
+    file_exists = path.exists(database)
+    if not file_exists:
+        create_results_table(database)
+
+    # Check if table is empty
+    num_rows = num_table_rows(database)[0][0]
+    if num_rows != 0:
+        clear_table(database)
 
     try:
         # Initialize Millihex robot
@@ -29,22 +42,6 @@ def main():
         # Start Gazebo
         millihex.spawn_model("gazebo")
 
-        # Gait and obstacle parameters, range=(min, max)
-        x = np.pi/2             # (pi/8, pi/2)
-        z = np.pi/2             # (pi/8, pi)
-        h = 0.02                # (0.01, 0.15)
-        step = 0.02             # (0.01, 0.5)
-        stance = np.pi/2        # (pi/8, pi/2)
-        pattern = "tripod"      # ["bipod", "tripod", "quadruped", "pentapod"]
-
-        # Spawn models and start walk test
-        millihex.spawn_model("obstacle", args=[f"obstacle_h:={h}"])
-        millihex.spawn_model("millihex")
-        (success, duration) = millihex.walk(pattern=pattern, gait_x=x, gait_z=z, stance=stance, step=step)
-
-        # Insert parameters to results database
-        insert_result(x, z, h, step, stance, pattern, success, duration)
-
         # Parameters (N^6 data points)
         N = 4
         x_range = np.linspace(np.pi/8, np.pi/2, N)
@@ -53,7 +50,7 @@ def main():
         step_range = np.linspace(0.01, 0.5, N)
         stance_range = np.linspace(np.pi/8, np.pi/2, N)
         pattern_range = ["bipod", "tripod", "quadruped", "pentapod"]
-
+        
         # Parameter sweep and data collection
         for pattern in pattern_range:
             for x in x_range:
@@ -64,13 +61,27 @@ def main():
                                 millihex.spawn_model("obstacle", args=[f"obstacle_h:={h}"])
                                 millihex.spawn_model("millihex")
                                 (success, duration) = millihex.walk(pattern=pattern, gait_x=x, gait_z=z, stance=stance, step=step)
-                                insert_result(x, z, h, step, stance, pattern, success, duration)
+                                insert_result(database, x, z, h, step, stance, pattern, success, duration)
+
+        # # TESTING
+        # # Gait and obstacle parameters, range=(min, max)
+        # x = np.pi/2             # (pi/8, pi/2)
+        # z = np.pi/2             # (pi/8, pi)
+        # h = 0.02                # (0.01, 0.15)
+        # step = 0.02             # (0.01, 0.5)
+        # stance = np.pi/2        # (pi/8, pi/2)
+        # pattern = "tripod"      # ["bipod", "tripod", "quadruped", "pentapod"]
+
+        # # Spawn models and start walk test
+        # millihex.spawn_model("obstacle", args=[f"obstacle_h:={h}"])
+        # millihex.spawn_model("millihex")
+        # (success, duration) = millihex.walk(pattern=pattern, gait_x=x, gait_z=z, stance=stance, step=step)
+
+        # # Insert parameters to results database
+        # insert_result(database, x, z, h, step, stance, pattern, success, duration)
 
     except rospy.ROSInterruptException:
         pass
-    finally:
-        print("Kill all processes...\n")
-        os.system("killall -9 rosmaster & killall -9 gzserver & killall -9 gzclient")
 
 
 def create_connection(db_file):
@@ -89,10 +100,7 @@ def create_connection(db_file):
     return conn
 
 
-def create_results_table():
-    # Database file path for parameter sweep results table
-    database = r"/root/catkin_ws/src/millihexapod/db/results.db"
-
+def create_results_table(database):
     # Results table SQL command
     results_table = """ CREATE TABLE IF NOT EXISTS results (
                             x REAL NOT NULL,
@@ -114,10 +122,7 @@ def create_results_table():
         print("Error! Could not create the database connection.")
 
 
-def insert_result(x, z, h, step, stance, pattern, success, duration):
-    # Database file path for parameter sweep results table
-    database = r"/root/catkin_ws/src/millihexapod/db/results.db"
-
+def insert_result(database, x, z, h, step, stance, pattern, success, duration):
     # Insert row SQL command
     row = """ INSERT INTO results(x, z, h, step, stance, pattern, success, duration)
               VALUES(?, ?, ?, ?, ?, ?, ?, ?) """
@@ -131,6 +136,28 @@ def insert_result(x, z, h, step, stance, pattern, success, duration):
         conn.commit()
 
 
+def clear_table(database):
+    # Delete all rows SQL command
+    delete_rows = """ DELETE FROM results """
+
+    # Create a database connection
+    conn = create_connection(database)
+    with conn:
+        cur = conn.cursor()
+        cur.execute(delete_rows)
+        conn.commit()
+
+def num_table_rows(database):
+    # Get table row count
+    num_rows = """ SELECT COUNT(*) FROM results """
+
+    # Create a database connection
+    conn = create_connection(database)
+    with conn:
+        cur = conn.cursor()
+        cur.execute(num_rows)
+        return cur.fetchall()
+
+
 if __name__ == '__main__':
-    # create_results_table()
     main()
